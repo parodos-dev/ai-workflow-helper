@@ -5,6 +5,7 @@ import yaml
 from config import Config
 from const import SYSTEM_MESSAGE, SAMPLE_QUERY
 
+from lib.click_tooling import MultiLinePromt
 from lib.json_validator import JsonSchemaValidatorTool
 from lib.models import Model
 from lib.ollama import Ollama
@@ -15,6 +16,7 @@ from lib.validator import ParsedOutputException, JsonSchemaValidationException
 
 from langchain.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
+from langchain_core.messages import HumanMessage
 
 
 class Context:
@@ -97,32 +99,34 @@ def chat(obj, message):
         # token usage can be tracked and chain of messages can be added.
         # | parser
     )
-
+    click.echo(f"The input query is: {SAMPLE_QUERY}")
     messages = [[{"input": SAMPLE_QUERY}]]
-    document = ""
-    for _ in range(5):
-        AI_response = rag_chain.invoke(messages)
-        messages.append(AI_response)
 
-        try:
-            document = validator.invoke(AI_response)
-            if document is not None:
-                break
-        except (ParsedOutputException, JsonSchemaValidationException) as e:
-            messages.append(e.get_mesage())
-        except Exception as e:
-            print("Execption: ", e)
+    def generate_reply():
+        document = ""
+        for _ in range(5):
+            AI_response = rag_chain.invoke(messages)
+            messages.append(AI_response)
 
-    print("Query send was: \n", SAMPLE_QUERY)
-    print("The response is:\n", yaml.dump(document, indent=4))
+            try:
+                document = validator.invoke(AI_response)
+                if document is not None:
+                    click.echo("The AI response is:\n{}".format(
+                        yaml.dump(document, indent=4)))
+                    break
+            except (ParsedOutputException, JsonSchemaValidationException) as e:
+                messages.append(e.get_mesage())
+            except Exception as e:
+                click.echo(f"There was an uncaught execption: {e}")
 
-@click.command()
-@click.pass_obj
-def test(obj):
-    from lib.click_tooling import MultiLinePromt
-    result = MultiLinePromt.get_and_wait_prompt()
+    generate_reply()
+    while True:
+        if not click.confirm("Do you want to continue asking?"):
+            break
 
-    click.echo(f"Result {result}")
+        next_prompt = MultiLinePromt.get_and_wait_prompt()
+        messages.append(HumanMessage(f"{next_prompt}"))
+        generate_reply()
 
 cli.add_command(load_data)
 cli.add_command(chat)
