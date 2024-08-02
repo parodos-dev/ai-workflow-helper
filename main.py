@@ -116,9 +116,17 @@ def chat(obj, message):
     print("Query send was: \n", SAMPLE_QUERY)
     print("The response is:\n", yaml.dump(document, indent=4))
 
+@click.command()
+@click.pass_obj
+def test(obj):
+    from lib.click_tooling import MultiLinePromt
+    result = MultiLinePromt.get_and_wait_prompt()
+
+    click.echo(f"Result {result}")
 
 cli.add_command(load_data)
 cli.add_command(chat)
+cli.add_command(test)
 
 if __name__ == '__main__':
     cli()
