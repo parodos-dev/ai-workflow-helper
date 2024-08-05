@@ -69,6 +69,7 @@
               pkgs.gnumake
               pyright
               pkgs.direnv
+              pkgs.kind
             ];
 
           };
