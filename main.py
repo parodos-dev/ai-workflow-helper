@@ -24,9 +24,10 @@ class Context:
         self.config = config
         self.ollama = Ollama(self.config.base_url, self.config.model)
         self.repo = VectorRepository(self.config.db, self.ollama.embeddings)
+
         self.validator = OutputValidator(
             OutputModel,
-            JsonSchemaValidatorTool(self.config.workflow_schema_url))
+            JsonSchemaValidatorTool.load_schema(Model.schema()))
 
 
 @click.group()
@@ -107,9 +108,9 @@ def chat(obj, message):
         for _ in range(5):
             AI_response = rag_chain.invoke(messages)
             messages.append(AI_response)
-
             try:
                 document = validator.invoke(AI_response)
+
                 if document is not None:
                     click.echo("The AI response is:\n{}".format(
                         yaml.dump(document, indent=4)))
@@ -128,9 +129,10 @@ def chat(obj, message):
         messages.append(HumanMessage(f"{next_prompt}"))
         generate_reply()
 
+
 cli.add_command(load_data)
 cli.add_command(chat)
-cli.add_command(test)
+
 
 if __name__ == '__main__':
     cli()

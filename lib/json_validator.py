@@ -1,24 +1,35 @@
 from jsonschema import validate
 import requests
 import yaml
-import json
 
 
 class JsonSchemaValidatorTool():
     json_schema_validator: object = None
 
-    def __init__(self, url):
+    @classmethod
+    def load_schema(cls, schema):
+        return cls(schema)
+
+    @classmethod
+    def load_from_url(cls, url):
         resp = requests.get(url)
         if resp.status_code != 200:
             raise Exception("Invalid URL status-code={resp.status_code}")
         try:
-            schema = self._transform(resp.text)
+            schema = cls._transform(resp.text)
         except Exception as e:
             raise Exception(f"Invalid yaml definition: {e}")
 
+        return cls(schema)
+
+    def __init__(self, schema):
         self.json_schema_validator = schema
 
     def validate(self, data):
+        import json
+        f = open("/tmp/data.json", "w")
+        f.write(json.dumps(data, indent=2))
+        f.close()
         if isinstance(data, dict):
             return validate(instance=data, schema=self.json_schema_validator)
 
