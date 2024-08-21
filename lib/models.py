@@ -1518,7 +1518,7 @@ class Model2(BaseModel):
     ] = Field(..., description='State definitions', min_items=1)
 
 
-class Model(BaseModel):
+class SerVerlessWorkflow(BaseModel):
     __root__: Model1 | Model2 = Field(
         ..., description='Serverless Workflow specification - workflow schema'
     )
