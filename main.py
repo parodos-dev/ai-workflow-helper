@@ -1,4 +1,5 @@
 import click
+import logging
 import sys
 import yaml
 
@@ -11,35 +12,42 @@ from lib.models import SerVerlessWorkflow
 from lib.ollama import Ollama
 from lib.repository import VectorRepository
 from lib.retriever import Retriever
-from lib.validator import OutputValidator, OutputModel
-from lib.validator import ParsedOutputException, JsonSchemaValidationException
-
-from langchain.prompts import ChatPromptTemplate, FewShotChatMessagePromptTemplate
-from langchain_core.runnables import RunnablePassthrough
-from langchain_core.messages import HumanMessage
+from lib.validator import OutputValidator
+from lib.validator import ParsedOutputException
+from lib.validator import JsonSchemaValidationException
 
 from langchain.output_parsers import PydanticOutputParser
-# from pydantic import BaseModel, Field, validator
-# from typing import List, Optional
+from langchain.prompts import ChatPromptTemplate
+from langchain.prompts import FewShotChatMessagePromptTemplate
+from langchain_core.messages import HumanMessage
+from langchain_core.runnables import RunnablePassthrough
 
-# class PlanItem(BaseModel):
-#     step: str
-#     tools: Optional[str] = []
-#     data_sources: Optional[str] = []
-#     sub_steps_needed: str
-
-# class Plan(BaseModel):
-#     plan: List[PlanItem]
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 
-# merda = PydanticOutputParser(pydantic_object=Model)
-# merda.get_format_instructions()
+def get_prompt_details():
 
-# import ipdb; ipdb.set_trace()
+    example_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("human", "{input}"),
+            ("ai", "{output}"),
+        ]
+    )
 
-import logging
-import sys
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+    few_shot_prompt = FewShotChatMessagePromptTemplate(
+        example_prompt=example_prompt,
+        examples=EXAMPLES,
+    )
+
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", SYSTEM_MESSAGE),
+            few_shot_prompt,
+            ("human", "{input}"),
+        ]
+    )
+
+    return prompt
 
 
 class Context:
@@ -97,15 +105,9 @@ def chat(obj, message):
     def format_docs(docs):
         return "\n\n".join(doc.page_content for doc in docs)
 
-    # system_prompt = (
-    #     "The schema for serverless workflow is the"
-    #     "following: ```{workflow_schema}```"
-    # )
-
     prompt = ChatPromptTemplate.from_messages(
         [
             ("system", SYSTEM_MESSAGE),
-            # ("system", system_prompt),
             ("human", "{input}"),
         ]
     )
@@ -115,7 +117,7 @@ def chat(obj, message):
     rag_chain = (
         {
             "context": retriever | format_docs,
-            #"workflow_schema": lambda _: Model.schema_json(),
+            # "workflow_schema": lambda _: Model.schema_json(),
             "input": RunnablePassthrough(),
             "format_instructions": validator.get_format_instructions,
         }
@@ -134,8 +136,7 @@ def chat(obj, message):
         for _ in range(5):
             AI_response = rag_chain.invoke(messages)
             messages.append(AI_response)
-            print(AI_response.content)
-            import ipdb; ipdb.set_trace()
+            logging.debug("Got AI response {}".format(AI_response.content))
             try:
                 document = validator.invoke(AI_response)
 
@@ -147,6 +148,8 @@ def chat(obj, message):
                 messages.append(e.get_mesage())
             except Exception as e:
                 click.echo(f"There was an uncaught execption: {e}")
+
+            click.confirm("Do you want to continue asking?")
 
     generate_reply()
     while True:
@@ -162,68 +165,47 @@ def chat(obj, message):
 @click.argument('message')
 @click.pass_obj
 def extended_chat(obj, message):
-
+    # This function is only for testing new things and do manual tests.
     retriever = obj.repo.retriever
-    llm = obj.ollama.llm.with_structured_output(OutputModel, method="json_mode")
     llm = obj.ollama.llm
     validator = obj.validator
 
     def format_docs(docs):
         return "\n\n".join(doc.page_content for doc in docs)
 
-    example_prompt = ChatPromptTemplate.from_messages(
-        [
-            ("human", "{input}"),
-            ("ai", "{output}"),
-        ]
-    )
-    few_shot_prompt = FewShotChatMessagePromptTemplate(
-        example_prompt=example_prompt,
-        examples=EXAMPLES,
-    )
-
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", SYSTEM_MESSAGE),
-            few_shot_prompt,
-            ("human", "{input}"),
-        ]
-    )
+    prompt = get_prompt_details()
 
     rag_chain = (
         {
             "context": retriever | format_docs,
             "input": RunnablePassthrough(),
-           # "format_instructions": validator.get_format_instructions,
-           "schema": lambda _: SerVerlessWorkflow.schema_json(),
+            "schema": lambda _: SerVerlessWorkflow.schema_json(),
         }
         | prompt
         | llm
     )
-    # import langchain:
-    # langchain.debug = True
+
     click.echo(f"The input query is: {SAMPLE_QUERY}")
     messages = [[{"input": SAMPLE_QUERY}]]
 
     def generate_reply():
         document = ""
         for _ in range(5):
-            click.confirm("Do you want to continue asking?")
             AI_response = rag_chain.invoke(messages)
+            logging.debug("Got AI response {}".format(AI_response.content))
             messages.append(AI_response)
-            print(AI_response.content)
-            import ipdb; ipdb.set_trace()
             try:
                 document = validator.invoke(AI_response)
-
                 if document is not None:
                     click.echo("The AI response is:\n{}".format(
                         yaml.dump(document, indent=4)))
                     break
             except (ParsedOutputException, JsonSchemaValidationException) as e:
+                click.echo("Failed to validate input json: {}".format(e.get_mesage()))
                 messages.append(e.get_mesage())
             except Exception as e:
                 click.echo(f"There was an uncaught execption: {e}")
+            click.confirm("Do you want to continue asking?")
 
     generate_reply()
     while True:
@@ -233,6 +215,7 @@ def extended_chat(obj, message):
         next_prompt = MultiLinePromt.get_and_wait_prompt()
         messages.append(HumanMessage(f"{next_prompt}"))
         generate_reply()
+
 
 cli.add_command(load_data)
 cli.add_command(chat)
