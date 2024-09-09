@@ -1,189 +1,191 @@
+# flake8: noqa E501
+
 SAMPLE_QUERY = '''
     Please create a serverless wofklow which make a request to https://httpbin.org/headers. if the reuqest is 200 OK, please get the response.headers.host from the json, and make another request to https://acalustra.com/provider/post.
 '''
 
 EXAMPLES = [
-{
-    "input": '''Generate a single Event State with one action that calls the "greeting" function. The event state consumes cloud events of type "greetingEventType". When an even with this type is consumed, the Event state performs a single action that calls the defined "greeting" function.''',
-    "output":'''
-```json
-{{
-"id": "eventbasedgreeting",
-"version": "1.0",
-"specVersion": "0.8",
-"name": "Event Based Greeting Workflow",
-"description": "Event Based Greeting",
-"start": "Greet",
-"events": [
- {{
-  "name": "GreetingEvent",
-  "type": "greetingEventType",
-  "source": "greetingEventSource"
- }}
-],
-"functions": [
-  {{
-     "name": "greetingFunction",
-     "operation": "file://myapis/greetingapis.json#greeting"
-  }}
-],
-"states":[
-  {{
-     "name":"Greet",
-     "type":"event",
-     "onEvents": [{{
-         "eventRefs": ["GreetingEvent"],
-         "eventDataFilter": {{
-            "data": "${{ .greet }}",
-            "toStateData": "${{ .greet }}"
+    {
+        "input": '''Generate a single Event State with one action that calls the "greeting" function. The event state consumes cloud events of type "greetingEventType". When an even with this type is consumed, the Event state performs a single action that calls the defined "greeting" function.''',
+        "output":'''
+    ```json
+    {{
+    "id": "eventbasedgreeting",
+    "version": "1.0",
+    "specVersion": "0.8",
+    "name": "Event Based Greeting Workflow",
+    "description": "Event Based Greeting",
+    "start": "Greet",
+    "events": [
+     {{
+      "name": "GreetingEvent",
+      "type": "greetingEventType",
+      "source": "greetingEventSource"
+     }}
+    ],
+    "functions": [
+      {{
+         "name": "greetingFunction",
+         "operation": "file://myapis/greetingapis.json#greeting"
+      }}
+    ],
+    "states":[
+      {{
+         "name":"Greet",
+         "type":"event",
+         "onEvents": [{{
+             "eventRefs": ["GreetingEvent"],
+             "eventDataFilter": {{
+                "data": "${{ .greet }}",
+                "toStateData": "${{ .greet }}"
+             }},
+             "actions":[
+                {{
+                   "functionRef": {{
+                      "refName": "greetingFunction",
+                      "arguments": {{
+                        "name": "${{ .greet.name }}"
+                      }}
+                   }}
+                }}
+             ]
+         }}],
+         "stateDataFilter": {{
+            "output": "${{ .payload.greeting }}"
          }},
-         "actions":[
-            {{
-               "functionRef": {{
-                  "refName": "greetingFunction",
-                  "arguments": {{
-                    "name": "${{ .greet.name }}"
-                  }}
-               }}
-            }}
-         ]
-     }}],
-     "stateDataFilter": {{
-        "output": "${{ .payload.greeting }}"
-     }},
-     "end": true
-  }}
-]
-}}
-```
-    '''
-},
+         "end": true
+      }}
+    ]
+    }}
+    ```
+        '''
+    },
 
-{
+    {
         "input": '''In this example we show the use of scheduled cron-based start event property. The example workflow checks the users inbox every 15 minutes and send them a text message when there are important emails.
         ''',
         "output": '''```json
-{{
-"id": "checkInbox",
-"name": "Check Inbox Workflow",
-"version": "1.0",
-"specVersion": "0.8",
-"description": "Periodically Check Inbox",
-"start": {{
-    "stateName": "CheckInbox",
-    "schedule": {{
-        "cron": "0 0/15 * * * ?"
-    }}
-}},
-"functions": [
     {{
-        "name": "checkInboxFunction",
-        "operation": "http://myapis.org/inboxapi.json#checkNewMessages"
+    "id": "checkInbox",
+    "name": "Check Inbox Workflow",
+    "version": "1.0",
+    "specVersion": "0.8",
+    "description": "Periodically Check Inbox",
+    "start": {{
+        "stateName": "CheckInbox",
+        "schedule": {{
+            "cron": "0 0/15 * * * ?"
+        }}
     }},
-    {{
-        "name": "sendTextFunction",
-        "operation": "http://myapis.org/inboxapi.json#sendText"
-    }}
-],
-"states": [
-    {{
-        "name": "CheckInbox",
-        "type": "operation",
-        "actionMode": "sequential",
-        "actions": [
-            {{
-                "functionRef": "checkInboxFunction"
-            }}
-        ],
-        "transition": "SendTextForHighPriority"
-    }},
-    {{
-        "name": "SendTextForHighPriority",
-        "type": "foreach",
-        "inputCollection": "${{ .messages }}",
-        "iterationParam": "singlemessage",
-        "actions": [
-            {{
-                "functionRef": {{
-                    "refName": "sendTextFunction",
-                    "arguments": {{
-                        "message": "${{ .singlemessage }}"
+    "functions": [
+        {{
+            "name": "checkInboxFunction",
+            "operation": "http://myapis.org/inboxapi.json#checkNewMessages"
+        }},
+        {{
+            "name": "sendTextFunction",
+            "operation": "http://myapis.org/inboxapi.json#sendText"
+        }}
+    ],
+    "states": [
+        {{
+            "name": "CheckInbox",
+            "type": "operation",
+            "actionMode": "sequential",
+            "actions": [
+                {{
+                    "functionRef": "checkInboxFunction"
+                }}
+            ],
+            "transition": "SendTextForHighPriority"
+        }},
+        {{
+            "name": "SendTextForHighPriority",
+            "type": "foreach",
+            "inputCollection": "${{ .messages }}",
+            "iterationParam": "singlemessage",
+            "actions": [
+                {{
+                    "functionRef": {{
+                        "refName": "sendTextFunction",
+                        "arguments": {{
+                            "message": "${{ .singlemessage }}"
+                        }}
                     }}
                 }}
-            }}
-        ],
-        "end": true
+            ],
+            "end": true
+        }}
+    ]
     }}
-]
-}}
-```'''
-},
-{
+    ```'''
+    },
+    {
         "input": "This example shows off the Switch State and the subflow action. The workflow is started with application information data as input",
         "output": '''
-```json
-{{
-   "id": "applicantrequest",
-   "version": "1.0",
-   "specVersion": "0.8",
-   "name": "Applicant Request Decision Workflow",
-   "description": "Determine if applicant request is valid",
-   "start": "CheckApplication",
-   "functions": [
-     {{
-        "name": "sendRejectionEmailFunction",
-        "operation": "http://myapis.org/applicationapi.json#emailRejection"
-     }}
-   ],
-   "states":[
-      {{
-         "name":"CheckApplication",
-         "type":"switch",
-         "dataConditions": [
-            {{
-              "condition": "${{ .applicants | .age >= 18 }}",
-              "transition": "StartApplication"
-            }},
-            {{
-              "condition": "${{ .applicants | .age < 18 }}",
-              "transition": "RejectApplication"
-            }}
-         ],
-         "defaultCondition": {{
-            "transition": "RejectApplication"
+    ```json
+    {{
+       "id": "applicantrequest",
+       "version": "1.0",
+       "specVersion": "0.8",
+       "name": "Applicant Request Decision Workflow",
+       "description": "Determine if applicant request is valid",
+       "start": "CheckApplication",
+       "functions": [
+         {{
+            "name": "sendRejectionEmailFunction",
+            "operation": "http://myapis.org/applicationapi.json#emailRejection"
          }}
-      }},
-      {{
-        "name": "StartApplication",
-        "type": "operation",
-        "actions": [
+       ],
+       "states":[
           {{
-            "subFlowRef": "startApplicationWorkflowId"
-          }}
-        ],
-        "end": true
-      }},
-      {{
-        "name":"RejectApplication",
-        "type":"operation",
-        "actionMode":"sequential",
-        "actions":[
-           {{
-              "functionRef": {{
-                 "refName": "sendRejectionEmailFunction",
-                 "arguments": {{
-                   "applicant": "${{ .applicant }}"
-                 }}
+             "name":"CheckApplication",
+             "type":"switch",
+             "dataConditions": [
+                {{
+                  "condition": "${{ .applicants | .age >= 18 }}",
+                  "transition": "StartApplication"
+                }},
+                {{
+                  "condition": "${{ .applicants | .age < 18 }}",
+                  "transition": "RejectApplication"
+                }}
+             ],
+             "defaultCondition": {{
+                "transition": "RejectApplication"
+             }}
+          }},
+          {{
+            "name": "StartApplication",
+            "type": "operation",
+            "actions": [
+              {{
+                "subFlowRef": "startApplicationWorkflowId"
               }}
-           }}
-        ],
-        "end": true
+            ],
+            "end": true
+          }},
+          {{
+            "name":"RejectApplication",
+            "type":"operation",
+            "actionMode":"sequential",
+            "actions":[
+               {{
+                  "functionRef": {{
+                     "refName": "sendRejectionEmailFunction",
+                     "arguments": {{
+                       "applicant": "${{ .applicant }}"
+                     }}
+                  }}
+               }}
+            ],
+            "end": true
+        }}
+       ]
     }}
-   ]
-}}
-```
-'''
-}
+    ```
+    '''
+    }
 ]
 
 SYSTEM_MESSAGE = '''

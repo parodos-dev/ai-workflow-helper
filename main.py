@@ -4,50 +4,30 @@ import sys
 import yaml
 
 from config import Config
-from const import SYSTEM_MESSAGE, SAMPLE_QUERY, EXAMPLES
+from const import SYSTEM_MESSAGE, SAMPLE_QUERY
 
+from lib.history import HistoryRepository
 from lib.click_tooling import MultiLinePromt
 from lib.json_validator import JsonSchemaValidatorTool
 from lib.models import SerVerlessWorkflow
 from lib.ollama import Ollama
 from lib.repository import VectorRepository
 from lib.retriever import Retriever
+from lib.validator import JsonSchemaValidationException
 from lib.validator import OutputValidator
 from lib.validator import ParsedOutputException
-from lib.validator import JsonSchemaValidationException
+from api.urls import urls
+from services.chats import get_prompt_details
 
+
+from flask import Flask, g
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import ChatPromptTemplate
-from langchain.prompts import FewShotChatMessagePromptTemplate
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnablePassthrough
+# from langchain_core.runnables.history import RunnableWithMessageHistory
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
-
-
-def get_prompt_details():
-
-    example_prompt = ChatPromptTemplate.from_messages(
-        [
-            ("human", "{input}"),
-            ("ai", "{output}"),
-        ]
-    )
-
-    few_shot_prompt = FewShotChatMessagePromptTemplate(
-        example_prompt=example_prompt,
-        examples=EXAMPLES,
-    )
-
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", SYSTEM_MESSAGE),
-            few_shot_prompt,
-            ("human", "{input}"),
-        ]
-    )
-
-    return prompt
 
 
 class Context:
@@ -60,7 +40,20 @@ class Context:
             SerVerlessWorkflow,
             JsonSchemaValidatorTool.load_schema(SerVerlessWorkflow.schema()))
 
+        self.historyRepo = HistoryRepository(
+            session_id="empty",
+            connection="sqlite:///{0}".format(self.config.chat_db))
 
+
+app = Flask(__name__)
+
+
+@app.before_request
+def before_request():
+    g.ctx = Context(Config())
+
+
+# @TODO delete this method
 @click.group()
 @click.pass_context
 def cli(ctx):
@@ -68,6 +61,7 @@ def cli(ctx):
     pass
 
 
+# @TODO Move this method to the servives
 @click.command()
 @click.argument('file-path')
 @click.pass_obj
@@ -93,6 +87,7 @@ def load_data(obj, file_path):
     click.echo("{0} documents added with ids {1}".format(len(documents), res))
 
 
+# @TODO move this method to the services.
 @click.command()
 @click.argument('message')
 @click.pass_obj
@@ -161,6 +156,7 @@ def chat(obj, message):
         generate_reply()
 
 
+# @TODO delete this method
 @click.command()
 @click.argument('message')
 @click.pass_obj
@@ -201,7 +197,8 @@ def extended_chat(obj, message):
                         yaml.dump(document, indent=4)))
                     break
             except (ParsedOutputException, JsonSchemaValidationException) as e:
-                click.echo("Failed to validate input json: {}".format(e.get_mesage()))
+                click.echo("Failed to validate input json: {}".format(
+                    e.get_mesage()))
                 messages.append(e.get_mesage())
             except Exception as e:
                 click.echo(f"There was an uncaught execption: {e}")
@@ -222,4 +219,6 @@ cli.add_command(chat)
 cli.add_command(extended_chat)
 
 if __name__ == '__main__':
-    cli()
+    for x in urls:
+        app.add_url_rule(x[0], view_func=x[1], methods=x[2])
+    app.run(debug=True)
