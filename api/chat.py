@@ -14,9 +14,10 @@ def create_new_chat():
     user_input = request.json.get("input", "")
     if len(user_input) == 0:
         return Response("Invalid user input", status=400)
-
-    response = get_response_for_session(g.ctx, session_id, user_input)
-    return Response(response, mimetype='text/html')
+    content = get_response_for_session(g.ctx, session_id, user_input)
+    response = Response(content, mimetype='text/html')
+    response.headers["session_id"] = session_id
+    return response
 
 
 def get_chat(session_id):
