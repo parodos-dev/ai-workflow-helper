@@ -35,6 +35,11 @@ def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
 
+def get_history(ctx, session_id):
+    ctx.history_repo.set_session(session_id)
+    return ctx.history_repo.messages
+
+
 def get_response_for_session(ctx, session_id, user_message):
     retriever = ctx.repo.retriever
     llm = ctx.ollama.llm
@@ -60,7 +65,7 @@ def get_response_for_session(ctx, session_id, user_message):
         history_messages_key="history",
     )
 
-    config = {"configurable": {"session_id": "<SESSION_ID>"}}
+    config = {"configurable": {"session_id": "{0}".format(session_id)}}
     ai_response = []
     result = chain_with_history.stream({}, config=config)
     for x in result:

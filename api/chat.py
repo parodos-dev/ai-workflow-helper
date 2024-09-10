@@ -1,11 +1,11 @@
 import uuid
 
 from flask import jsonify, g, Response, request
-from services.chats import get_response_for_session
+from services.chats import get_response_for_session, get_history
 
 
 def list_chats():
-    sessions = g.ctx.historyRepo.get_all_sessions()
+    sessions = g.ctx.history_repo.get_all_sessions()
     return jsonify(sessions)
 
 
@@ -17,3 +17,8 @@ def create_new_chat():
 
     response = get_response_for_session(g.ctx, session_id, user_input)
     return Response(response, mimetype='text/html')
+
+
+def get_chat(session_id):
+    messages = [x.dict() for x in get_history(g.ctx, session_id)]
+    return jsonify(messages)
