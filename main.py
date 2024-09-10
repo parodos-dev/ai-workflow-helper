@@ -40,7 +40,7 @@ class Context:
             SerVerlessWorkflow,
             JsonSchemaValidatorTool.load_schema(SerVerlessWorkflow.schema()))
 
-        self.historyRepo = HistoryRepository(
+        self.history_repo = HistoryRepository(
             session_id="empty",
             connection="sqlite:///{0}".format(self.config.chat_db))
 

@@ -2,6 +2,11 @@ from langchain_community.chat_message_histories import SQLChatMessageHistory
 
 
 class HistoryRepository(SQLChatMessageHistory):
+
+    def set_session(self, session_id):
+        self.session_id = session_id
+        return self
+
     def get_all_sessions(self):
         sessions = []
         with self._make_sync_session() as session:
