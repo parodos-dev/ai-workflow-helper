@@ -2,12 +2,13 @@ import click
 import logging
 import sys
 import yaml
+import requests
 
+from api.urls import urls
 from config import Config
 from const import SYSTEM_MESSAGE, SAMPLE_QUERY
-
-from lib.history import HistoryRepository
 from lib.click_tooling import MultiLinePromt
+from lib.history import HistoryRepository
 from lib.json_validator import JsonSchemaValidatorTool
 from lib.models import SerVerlessWorkflow
 from lib.ollama import Ollama
@@ -16,7 +17,6 @@ from lib.retriever import Retriever
 from lib.validator import JsonSchemaValidationException
 from lib.validator import OutputValidator
 from lib.validator import ParsedOutputException
-from api.urls import urls
 from services.chats import get_prompt_details
 
 
@@ -25,7 +25,6 @@ from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnablePassthrough
-# from langchain_core.runnables.history import RunnableWithMessageHistory
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
@@ -87,6 +86,27 @@ def load_data(obj, file_path):
     click.echo("{0} documents added with ids {1}".format(len(documents), res))
 
 
+@click.command()
+@click.pass_obj
+def run(obj):
+    for x in urls:
+        app.add_url_rule(x[0], view_func=x[1], methods=x[2])
+    app.run(debug=True)
+
+
+@click.command()
+@click.pass_obj
+def sample_request(obj):
+    url = "http://localhost:5000/chat"
+    headers = {
+        'Content-type': 'application/json',
+    }
+    data = {'input': SAMPLE_QUERY}
+    response = requests.post(url, json=data, headers=headers, stream=True)
+    for line in response.iter_lines():
+        print(line.decode('utf-8'))
+
+
 # @TODO move this method to the services.
 @click.command()
 @click.argument('message')
@@ -108,7 +128,6 @@ def chat(obj, message):
     )
 
     merda = PydanticOutputParser(pydantic_object=SerVerlessWorkflow)
-    # import ipdb; ipdb.set_trace()
     rag_chain = (
         {
             "context": retriever | format_docs,
@@ -215,10 +234,10 @@ def extended_chat(obj, message):
 
 
 cli.add_command(load_data)
+cli.add_command(run)
+cli.add_command(sample_request)
 cli.add_command(chat)
 cli.add_command(extended_chat)
 
 if __name__ == '__main__':
-    for x in urls:
-        app.add_url_rule(x[0], view_func=x[1], methods=x[2])
-    app.run(debug=True)
+    cli()

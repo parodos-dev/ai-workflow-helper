@@ -36,19 +36,16 @@ def format_docs(docs):
 
 
 def get_response_for_session(ctx, session_id, user_message):
-    # retriever = ctx.repo.retriever
+    retriever = ctx.repo.retriever
     llm = ctx.ollama.llm
 
     # @TODO check if this clone the thing to a new object.
     history_repo = ctx.history_repo
 
     prompt = get_prompt_details()
-
-    # @TODO fix retriever for RAG
     chain = (
         {
-            # "context": retriever | format_docs,
-            "context": lambda x: x,
+            "context": retriever | format_docs,
             "schema": lambda _: SerVerlessWorkflow.schema_json(),
             "input": lambda _: user_message,
         }
@@ -64,6 +61,11 @@ def get_response_for_session(ctx, session_id, user_message):
     )
 
     config = {"configurable": {"session_id": "<SESSION_ID>"}}
+    ai_response = []
     result = chain_with_history.stream({}, config=config)
     for x in result:
+        ai_response.append(x.content)
         yield x.content
+
+    history_repo.add_user_message(user_message)
+    history_repo.add_ai_message(" ".join(ai_response))
