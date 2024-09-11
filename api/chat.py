@@ -23,3 +23,11 @@ def create_new_chat():
 def get_chat(session_id):
     messages = [x.dict() for x in get_history(g.ctx, session_id)]
     return jsonify(messages)
+
+
+def push_new_message(session_id):
+    user_input = request.json.get("input", "")
+    if len(user_input) == 0:
+        return Response("Invalid user input", status=400)
+    content = get_response_for_session(g.ctx, session_id, user_input)
+    return Response(content, mimetype='text/html')

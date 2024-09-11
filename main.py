@@ -105,8 +105,16 @@ def sample_request(obj):
     response = requests.post(url, json=data, headers=headers, stream=True)
     for line in response.iter_lines():
         print(line.decode('utf-8'))
-    click.echo("The session_id is: {0}".format(
-        response.headers.get('session_id')))
+    session_id = response.headers.get('session_id')
+    click.echo(f"The session_id is: {session_id}")
+
+    url = f"http://localhost:5000/chat/{session_id}"
+    data["input"] = (
+        "Could you add a kafka message at the end of the workflow"
+        "with the response?")
+    response = requests.post(url, json=data, headers=headers, stream=True)
+    for line in response.iter_lines():
+        print(line.decode('utf-8'))
 
 
 # @TODO move this method to the services.

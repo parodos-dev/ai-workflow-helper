@@ -1,9 +1,11 @@
 from const import SYSTEM_MESSAGE, EXAMPLES
+from lib.models import SerVerlessWorkflow
 
 from langchain.prompts import ChatPromptTemplate
+from langchain.schema.runnable import RunnablePassthrough
 from langchain.prompts import FewShotChatMessagePromptTemplate
+from langchain.prompts import MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
-from lib.models import SerVerlessWorkflow
 
 
 def get_prompt_details():
@@ -24,6 +26,7 @@ def get_prompt_details():
         [
             ("system", SYSTEM_MESSAGE),
             few_shot_prompt,
+            MessagesPlaceholder(variable_name="history"),
             ("human", "{input}"),
         ]
     )
@@ -46,25 +49,25 @@ def get_response_for_session(ctx, session_id, user_message):
 
     # @TODO check if this clone the thing to a new object.
     history_repo = ctx.history_repo
+    history_repo.set_session(f"{session_id}")
 
     prompt = get_prompt_details()
     chain = (
         {
             "context": retriever | format_docs,
             "schema": lambda _: SerVerlessWorkflow.schema_json(),
-            "input": lambda _: user_message,
+            "input": RunnablePassthrough(),
+            "history": lambda _: history_repo.messages,
         }
         | prompt
-        | llm
-    )
+        | llm)
 
     chain_with_history = RunnableWithMessageHistory(
         chain,
-        lambda session_id: history_repo.set_session(session_id),
+        lambda session_id: history_repo,
         input_messages_key="input",
         history_messages_key="history",
     )
-
     config = {"configurable": {"session_id": "{0}".format(session_id)}}
     ai_response = []
     result = chain_with_history.stream({}, config=config)
