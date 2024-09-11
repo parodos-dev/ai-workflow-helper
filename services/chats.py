@@ -76,4 +76,4 @@ def get_response_for_session(ctx, session_id, user_message):
         yield x.content
 
     history_repo.add_user_message(user_message)
-    history_repo.add_ai_message(" ".join(ai_response))
+    history_repo.add_ai_message("".join(ai_response))
