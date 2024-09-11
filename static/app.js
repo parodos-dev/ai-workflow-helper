@@ -56,9 +56,9 @@ function displayMessages(messages) {
     hljs.highlightAll();
 }
 
-// Send a message
+// Send a message and handle streaming response
 async function sendMessage(message) {
-    const url = currentSessionId 
+    const url = currentSessionId
         ? `/chat/${currentSessionId}`
         : 'chat';
     const response = await fetch(url, {
@@ -66,14 +66,33 @@ async function sendMessage(message) {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({input: message})
     });
-    const data = await response.json();
+
     if (!currentSessionId) {
         currentSessionId = response.headers.get('session_id');
     }
-    loadChat(currentSessionId)
-    //displayMessages(data.messages);
-    return data;
+
+    // This is for streaming response
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let aiMessage = '';
+    const chatMessages = document.getElementById('chatMessages');
+    const aiMessageDiv = createElement('div', 'message ai');
+    chatMessages.appendChild(aiMessageDiv);
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        aiMessage += chunk;
+        aiMessageDiv.innerHTML = marked.parse(aiMessage);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        hljs.highlightAll();
+    }
+
+    loadChat(currentSessionId);
+    return { messages: [{ type: 'ai', content: aiMessage }] };
 }
+
 
 // Event listeners
 document.getElementById('newChatButton').addEventListener('click', () => {
