@@ -17,6 +17,15 @@ class ParsedOutputException(Exception):
 
 class JsonSchemaValidationException(Exception):
 
+    def __init__(self, errors, data={}):
+        self.errors = errors
+        self._data = data
+        super().__init__(str(errors))
+
+    @property
+    def data(self):
+        return self._data
+
     def get_mesage(self):
         return HumanMessage(
             "The validation of the previous provided JSON is not valid,"
@@ -42,10 +51,14 @@ class OutputValidator():
                     f'reponse with id="{ai_message.id}"')
         return parsed_output
 
-    def invoke(self, ai_message):
+    def validate(self, parsed_output):
         try:
             self.validator.validate(parsed_output)
         except Exception as e:
-            raise JsonSchemaValidationException(e)
+            raise JsonSchemaValidationException(e, data=parsed_output)
 
         return parsed_output
+
+    def invoke(self, ai_message):
+        parsed_output = self.get_json(ai_message)
+        return self.validate(parsed_output)

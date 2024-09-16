@@ -1,7 +1,8 @@
 import uuid
 
 from flask import jsonify, g, Response, request
-from services.chats import get_response_for_session, get_history, get_workflow_for_session
+from services.chats import get_response_for_session, get_history
+from services.chats import get_workflow_for_session
 
 
 def list_chats():
@@ -24,9 +25,11 @@ def get_chat(session_id):
     messages = [x.dict() for x in get_history(g.ctx, session_id)]
     return jsonify(messages)
 
+
 def get_workflow(session_id):
     content = get_workflow_for_session(g.ctx, session_id)
     return content
+
 
 def push_new_message(session_id):
     user_input = request.json.get("input", "")

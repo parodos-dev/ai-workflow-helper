@@ -147,6 +147,7 @@
             wikipedia
             pip
             flask_sqlalchemy
+            pylint
             (langchain.overridePythonAttrs (prevAttrs: {
               name = "langchain-experimental";
               sourceRoot = "${prevAttrs.src.name}/libs/experimental";
