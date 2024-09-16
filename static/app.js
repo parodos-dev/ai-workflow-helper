@@ -1,7 +1,6 @@
 // Global variables
 let currentSessionId = null;
 
-
 marked.setOptions({
   highlight: function(code, lang) {
     if (lang && hljs.getLanguage(lang)) {
@@ -42,18 +41,35 @@ async function loadChat(sessionId) {
     displayMessages(messages);
 }
 
+function setJsonData(data, valid) {
+    container = document.getElementById("workflowCode");
+    container.innerHTML = data
+    hljs.highlightBlock(container);
+
+    container = document.getElementById("jsonValid");
+    container.innerHTML = ((valid) ? '✅' : '❌');
+}
+
+async function displayJsonWorkflow() {
+   const response = await fetch(`/chat/${currentSessionId}/workflow`);
+   const workflow = await response.json();
+   setJsonData(JSON.stringify(workflow.document, null, 2))
+}
+
 // Display messages in the chat area
 function displayMessages(messages) {
     const chatMessages = document.getElementById('chatMessages');
-    chatMessages.innerHTML = '';
+    while (chatMessages.firstChild) {
+        chatMessages.removeChild(chatMessages.firstChild);
+    }
     messages.forEach(message => {
         const messageDiv = createElement('div', `message ${message.type}`);
         messageDiv.innerHTML = marked.parse(message.content);
         chatMessages.appendChild(messageDiv);
     });
     chatMessages.scrollTop = chatMessages.scrollHeight;
-    console.log("This is the call for this");
     hljs.highlightAll();
+    displayJsonWorkflow();
 }
 
 // Send a message and handle streaming response

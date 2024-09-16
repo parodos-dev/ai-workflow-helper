@@ -33,14 +33,16 @@ class OutputValidator():
     def get_format_instructions(self, input, **kwargs):
         return self.parser.get_format_instructions(**kwargs)
 
-    def invoke(self, ai_message):
+    def get_json(self, ai_message):
         parsed_output = self.parser.invoke(ai_message)
 
         if parsed_output is None or parsed_output == "":
             raise ParsedOutputException(
                     'Cannot get valid json workflow from the AI'
                     f'reponse with id="{ai_message.id}"')
+        return parsed_output
 
+    def invoke(self, ai_message):
         try:
             self.validator.validate(parsed_output)
         except Exception as e:

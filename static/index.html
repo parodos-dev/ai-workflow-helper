@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/static/app.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
     <script src="/static/marked.min.js"></script>
+    <script src="/static/editor.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
 </head>
 <body>
@@ -27,10 +28,18 @@
             </div>
         </div>
         <div class="function-column">
-            <h2>Function Column</h2>
-            <div id="svgContainer"></div>
+            <h2>Json Raw Data <div id="jsonValid" style="display: inline"></div></h2>
+            <div id="jsonWorkflow">
+                <pre><code id="workflowCode" class="language-json">
+                </code></pre>
+            </div>
+
+            <h2>Workflow</h2>
+            <div id="editorWorkflow"></div>
+            <div id="renderWorkflow"></div>
         </div>
     </div>
+    <script src="/static/editor_helpers.js"></script>
     <script src="/static/app.js"></script>
 </body>
 </html>

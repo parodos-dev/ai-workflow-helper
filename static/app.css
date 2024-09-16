@@ -149,6 +149,10 @@ body, html {
     width: auto;
 }
 
+#editorWorkflow {
+    display: none;
+}
+
 #svgContainer {
     width: 100%;
     height: 300px;
