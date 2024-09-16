@@ -1,6 +1,32 @@
-from jsonschema import validate
+from jsonschema import validate, ValidationError
 import requests
 import yaml
+import json
+
+
+class JsonSchemaValidationException(Exception):
+
+    def __init__(self, errors, data={}):
+        self.errors = errors
+        self._data = data
+        super().__init__(str(errors))
+
+    @property
+    def data(self):
+        return self._data
+
+    def get_error(self):
+        messages = []
+        errors = sorted(self.errors.context, key=lambda e: e.schema_path)
+        for suberror in errors:
+            messages.append((
+                '.'.join(str(item) for item in suberror.schema_path),
+                suberror.message))
+        res = '\n'.join("- {}: error {}".format(x, y) for x, y in messages)
+        return res
+
+    def get_mesage(self):
+        return self.get_error()
 
 
 class JsonSchemaValidatorTool():
@@ -26,17 +52,20 @@ class JsonSchemaValidatorTool():
         self.json_schema_validator = schema
 
     def validate(self, data):
-        import json
-        f = open("/tmp/data.json", "w")
-        f.write(json.dumps(data, indent=2))
-        f.close()
-        if isinstance(data, dict):
-            return validate(instance=data, schema=self.json_schema_validator)
 
-        if isinstance(data, str):
-            return validate(
-                instance=json.loads(data),
-                schema=self.json_schema_validator)
+        try:
+            if isinstance(data, dict):
+                return validate(
+                    instance=data,
+                    schema=self.json_schema_validator)
+
+            if isinstance(data, str):
+                return validate(
+                    instance=json.loads(data),
+                    schema=self.json_schema_validator)
+
+        except ValidationError as errors:
+            raise JsonSchemaValidationException(errors, data)
 
         raise Exception(
                 "Type of data '{}' cannot be parsed".format(type(data)))
