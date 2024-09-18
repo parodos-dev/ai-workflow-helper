@@ -1,3 +1,5 @@
+from lib.json_validator import JsonSchemaValidationException
+
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.messages import HumanMessage
@@ -13,23 +15,6 @@ class ParsedOutputException(Exception):
     def get_mesage(self):
         return HumanMessage(
             "We cannot extract any json from your previous reply")
-
-
-class JsonSchemaValidationException(Exception):
-
-    def __init__(self, errors, data={}):
-        self.errors = errors
-        self._data = data
-        super().__init__(str(errors))
-
-    @property
-    def data(self):
-        return self._data
-
-    def get_mesage(self):
-        return HumanMessage(
-            "The validation of the previous provided JSON is not valid,"
-            " here are the errors {0}\n".format(str(self)))
 
 
 class OutputValidator():
@@ -52,11 +37,7 @@ class OutputValidator():
         return parsed_output
 
     def validate(self, parsed_output):
-        try:
-            self.validator.validate(parsed_output)
-        except Exception as e:
-            raise JsonSchemaValidationException(e, data=parsed_output)
-
+        self.validator.validate(parsed_output)
         return parsed_output
 
     def invoke(self, ai_message):

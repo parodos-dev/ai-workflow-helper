@@ -1,0 +1,110 @@
+```json
+{
+  "id": "get_public_info",
+  "name": "Get And publish ip information",
+  "version": "1.0",
+  "specVersion": "0.8",
+  "start": "Get public IP",
+  "errors": [
+    {
+      "name": "notAvailable",
+      "code": "404"
+    }
+  ],
+  "functions": [
+    {
+      "name": "getIP",
+      "type": "custom",
+      "operation": "rest:get:https://ipinfo.io/json"
+    },
+    {
+      "name": "pushData",
+      "type": "custom",
+      "operation": "rest:post:https://httpbin.org/post"
+    },
+    {
+      "name": "logInfo",
+      "type": "custom",
+      "operation": "sysout:INFO"
+    }
+  ],
+  "states": [
+    {
+      "name": "Get public IP",
+      "type": "operation",
+      "actions": [
+        {
+          "functionRef": {
+            "refName": "getIP"
+          },
+          "actionDataFilter": {
+            "toStateData": ".ip_info"
+          }
+        }
+      ],
+      "onErrors": [
+        {
+          "errorRef": "notAvailable",
+          "transition": "logError"
+        }
+      ],
+      "transition": "push_host_data"
+    },
+    {
+      "name": "push_host_data",
+      "type": "operation",
+      "actions": [
+        {
+          "functionRef": {
+            "refName": "pushData",
+            "arguments": {
+                "city": ".ip_info.city",
+                "ip": ".ip_info.ip"
+            }
+          },
+          "actionDataFilter": {
+            "toStateData": ".results"
+          }
+        }
+      ],
+      "onErrors": [
+        {
+          "errorRef": "notAvailable",
+          "transition": "logError"
+        }
+      ],
+      "transition": "finalState"
+    },
+    {
+      "name": "finalState",
+      "type": "operation",
+      "actions": [
+        {
+          "functionRef": {
+            "refName": "logInfo",
+            "arguments": {
+              "message": "\"FINAL INFORMATION!: \\(.)\""
+            }
+          }
+        }
+      ],
+      "end": true
+    },
+    {
+      "name": "logError",
+      "type": "operation",
+      "actions": [
+        {
+          "functionRef": {
+            "refName": "logInfo",
+            "arguments": {
+              "message": "\"GOT 404 message, state value=\\(.)\""
+            }
+          }
+        }
+      ],
+      "end": true
+    }
+  ]
+}
+```

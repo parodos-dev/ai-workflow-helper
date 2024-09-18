@@ -10,3 +10,11 @@ project-create:
 project-run:
 	cd $(WORKFLOW_NAME) && kn run
 
+load-data:
+	python main.py load-data specification.md
+	python main.py load-data examples.md
+
+
+clean-data:
+	rm -rf chats.db
+	rm -rf /tmp/db_faiss

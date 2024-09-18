@@ -1,0 +1,5 @@
+Gpenerate a serverless workflow which:
+- Obtain the public IP info from http://ipinfo.io/json 
+- If the request is 404, please log the error.
+- If the request is sucessfull make an http request to https://httpbin.org/post which the payload from previous request with city and public ip
+- Log all the final state variable in the logs on log level INFO

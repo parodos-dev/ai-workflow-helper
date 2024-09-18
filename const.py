@@ -1,192 +1,48 @@
 # flake8: noqa E501
+import os
 
 SAMPLE_QUERY = '''
     Please create a serverless wofklow which make a request to https://httpbin.org/headers. if the reuqest is 200 OK, please get the response.headers.host from the json, and make another request to https://acalustra.com/provider/post.
 '''
 
-EXAMPLES = [
-    {
-        "input": '''Generate a single Event State with one action that calls the "greeting" function. The event state consumes cloud events of type "greetingEventType". When an even with this type is consumed, the Event state performs a single action that calls the defined "greeting" function.''',
-        "output":'''
-    ```json
-    {{
-    "id": "eventbasedgreeting",
-    "version": "1.0",
-    "specVersion": "0.8",
-    "name": "Event Based Greeting Workflow",
-    "description": "Event Based Greeting",
-    "start": "Greet",
-    "events": [
-     {{
-      "name": "GreetingEvent",
-      "type": "greetingEventType",
-      "source": "greetingEventSource"
-     }}
-    ],
-    "functions": [
-      {{
-         "name": "greetingFunction",
-         "operation": "file://myapis/greetingapis.json#greeting"
-      }}
-    ],
-    "states":[
-      {{
-         "name":"Greet",
-         "type":"event",
-         "onEvents": [{{
-             "eventRefs": ["GreetingEvent"],
-             "eventDataFilter": {{
-                "data": "${{ .greet }}",
-                "toStateData": "${{ .greet }}"
-             }},
-             "actions":[
-                {{
-                   "functionRef": {{
-                      "refName": "greetingFunction",
-                      "arguments": {{
-                        "name": "${{ .greet.name }}"
-                      }}
-                   }}
-                }}
-             ]
-         }}],
-         "stateDataFilter": {{
-            "output": "${{ .payload.greeting }}"
-         }},
-         "end": true
-      }}
-    ]
-    }}
-    ```
-        '''
-    },
+class ExamplesIterator:
+    def __init__(self, directory):
+        self.directory = directory
+        self.examples = self._load_examples()
+        self.index = 0
 
-    {
-        "input": '''In this example we show the use of scheduled cron-based start event property. The example workflow checks the users inbox every 15 minutes and send them a text message when there are important emails.
-        ''',
-        "output": '''```json
-    {{
-    "id": "checkInbox",
-    "name": "Check Inbox Workflow",
-    "version": "1.0",
-    "specVersion": "0.8",
-    "description": "Periodically Check Inbox",
-    "start": {{
-        "stateName": "CheckInbox",
-        "schedule": {{
-            "cron": "0 0/15 * * * ?"
-        }}
-    }},
-    "functions": [
-        {{
-            "name": "checkInboxFunction",
-            "operation": "http://myapis.org/inboxapi.json#checkNewMessages"
-        }},
-        {{
-            "name": "sendTextFunction",
-            "operation": "http://myapis.org/inboxapi.json#sendText"
-        }}
-    ],
-    "states": [
-        {{
-            "name": "CheckInbox",
-            "type": "operation",
-            "actionMode": "sequential",
-            "actions": [
-                {{
-                    "functionRef": "checkInboxFunction"
-                }}
-            ],
-            "transition": "SendTextForHighPriority"
-        }},
-        {{
-            "name": "SendTextForHighPriority",
-            "type": "foreach",
-            "inputCollection": "${{ .messages }}",
-            "iterationParam": "singlemessage",
-            "actions": [
-                {{
-                    "functionRef": {{
-                        "refName": "sendTextFunction",
-                        "arguments": {{
-                            "message": "${{ .singlemessage }}"
-                        }}
-                    }}
-                }}
-            ],
-            "end": true
-        }}
-    ]
-    }}
-    ```'''
-    },
-    {
-        "input": "This example shows off the Switch State and the subflow action. The workflow is started with application information data as input",
-        "output": '''
-    ```json
-    {{
-       "id": "applicantrequest",
-       "version": "1.0",
-       "specVersion": "0.8",
-       "name": "Applicant Request Decision Workflow",
-       "description": "Determine if applicant request is valid",
-       "start": "CheckApplication",
-       "functions": [
-         {{
-            "name": "sendRejectionEmailFunction",
-            "operation": "http://myapis.org/applicationapi.json#emailRejection"
-         }}
-       ],
-       "states":[
-          {{
-             "name":"CheckApplication",
-             "type":"switch",
-             "dataConditions": [
-                {{
-                  "condition": "${{ .applicants | .age >= 18 }}",
-                  "transition": "StartApplication"
-                }},
-                {{
-                  "condition": "${{ .applicants | .age < 18 }}",
-                  "transition": "RejectApplication"
-                }}
-             ],
-             "defaultCondition": {{
-                "transition": "RejectApplication"
-             }}
-          }},
-          {{
-            "name": "StartApplication",
-            "type": "operation",
-            "actions": [
-              {{
-                "subFlowRef": "startApplicationWorkflowId"
-              }}
-            ],
-            "end": true
-          }},
-          {{
-            "name":"RejectApplication",
-            "type":"operation",
-            "actionMode":"sequential",
-            "actions":[
-               {{
-                  "functionRef": {{
-                     "refName": "sendRejectionEmailFunction",
-                     "arguments": {{
-                       "applicant": "${{ .applicant }}"
-                     }}
-                  }}
-               }}
-            ],
-            "end": true
-        }}
-       ]
-    }}
-    ```
-    '''
-    }
-]
+    def _load_examples(self):
+        examples = []
+        files = os.listdir(self.directory)
+        input_files = sorted([f for f in files if f.endswith('_input.txt')])
+
+        for input_file in input_files:
+            example_num = input_file.split('_')[0]
+            output_file = f"{example_num}_output.txt"
+
+            if output_file in files:
+                with open(os.path.join(self.directory, input_file), 'r') as f:
+                    input_text = f.read()
+                with open(os.path.join(self.directory, output_file), 'r') as f:
+                    output_text = f.read()
+                examples.append({
+                    "input": input_text,
+                    "output": output_text
+                })
+        return examples
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.index < len(self.examples):
+            result = self.examples[self.index]
+            self.index += 1
+            return result
+        else:
+            raise StopIteration
+
+EXAMPLES=list(ExamplesIterator("./lib/prompts/examples/"))
 
 SYSTEM_MESSAGE = '''
 You're a agent which help users to write Serverless workflows.
@@ -280,280 +136,5 @@ You're a agent which help users to write Serverless workflows.
 ```
 
 CONTEXT:
-{context}
-'''
-
-
-SYSTEM_MESSAGE_B = '''You are an expert Serverless Workflow generator, responsible for generating valid Serverless Workflows JSON manifests. You must always generate output in raw JSON format and ensure that all required fields such as `id`, `specVersion`, `states`, and `key` are included. Your output should always be wrapped in ```json. Don't rely on data you know about Serverless workflow specification. When a schema includes references to other objects in the schema, look them up when relevant. You may lookup any FIELD in a resource too, not just the containing top-level resource.
-
-Always ensure that the generated JSON follows this basic structure:
-```json
-{{
-   "id": "applicantrequest",
-   "version": "1.0",
-   "specVersion": "0.8",
-   "name": "Applicant Request Decision Workflow",
-   "description": "Determine if applicant request is valid",
-   "start": "CheckApplication",
-   "functions": [
-     {{
-        "name": "sendRejectionEmailFunction",
-        "operation": "http://myapis.org/applicationapi.json#emailRejection"
-     }}
-   ],
-   "states":[
-      {{
-         "name":"CheckApplication",
-         "type":"switch",
-         "dataConditions": [
-            {{
-              "condition": "${{ .applicants | .age >= 18 }}",
-              "transition": "StartApplication"
-            }},
-            {{
-              "condition": "${{ .applicants | .age < 18 }}",
-              "transition": "RejectApplication"
-            }}
-         ],
-         "defaultCondition": {{
-            "transition": "RejectApplication"
-         }}
-      }},
-      {{
-        "name": "StartApplication",
-        "type": "operation",
-        "actions": [
-          {{
-            "subFlowRef": "startApplicationWorkflowId"
-          }}
-        ],
-        "end": true
-      }},
-      {{
-        "name":"RejectApplication",
-        "type":"operation",
-        "actionMode":"sequential",
-        "actions":[
-           {{
-              "functionRef": {{
-                 "refName": "sendRejectionEmailFunction",
-                 "arguments": {{
-                   "applicant": "${{ .applicant }}"
-                 }}
-              }}
-           }}
-        ],
-        "end": true
-    }}
-   ]
-}}
-```
-please start with this template:
-
-```json
-{{
-   "id": "<workflow_id>",
-   "version": "1.0",
-   "specVersion": "0.8",
-   "name": "<workflow_name>",
-   "description": "<workflow_description>",
-   "start": "<init_start_node>",
-   "functions": [],
-   "states":[]
-}}
-```
-Where you should chnage the labels under <>.
-
-The following are a few examples on how a workflow is defined and compiles based on workflow schema specification, keep in similar way:
-Example 1:
-IMPUT:
-This example shows a single Event State with one action that calls the "greeting" function. The event state consumes cloud events of type "greetingEventType". When an even with this type is consumed, the Event state performs a single action that calls the defined "greeting" function.
-
-OUTPUT:
-```json
-{{
-"id": "eventbasedgreeting",
-"version": "1.0",
-"specVersion": "0.8",
-"name": "Event Based Greeting Workflow",
-"description": "Event Based Greeting",
-"start": "Greet",
-"events": [
- {{
-  "name": "GreetingEvent",
-  "type": "greetingEventType",
-  "source": "greetingEventSource"
- }}
-],
-"functions": [
-  {{
-     "name": "greetingFunction",
-     "operation": "file://myapis/greetingapis.json#greeting"
-  }}
-],
-"states":[
-  {{
-     "name":"Greet",
-     "type":"event",
-     "onEvents": [{{
-         "eventRefs": ["GreetingEvent"],
-         "eventDataFilter": {{
-            "data": "${{ .greet }}",
-            "toStateData": "${{ .greet }}"
-         }},
-         "actions":[
-            {{
-               "functionRef": {{
-                  "refName": "greetingFunction",
-                  "arguments": {{
-                    "name": "${{ .greet.name }}"
-                  }}
-               }}
-            }}
-         ]
-     }}],
-     "stateDataFilter": {{
-        "output": "${{ .payload.greeting }}"
-     }},
-     "end": true
-  }}
-]
-}}
-```
-
-Example 2:
-INPUT
-In this example we show the use of scheduled cron-based start event
-property. The example workflow checks the users inbox every 15 minutes and send
-them a text message when there are important emails.
-
-OUTPUT:
-```json
-{{
-"id": "checkInbox",
-"name": "Check Inbox Workflow",
-"version": "1.0",
-"specVersion": "0.8",
-"description": "Periodically Check Inbox",
-"start": {{
-    "stateName": "CheckInbox",
-    "schedule": {{
-        "cron": "0 0/15 * * * ?"
-    }}
-}},
-"functions": [
-    {{
-        "name": "checkInboxFunction",
-        "operation": "http://myapis.org/inboxapi.json#checkNewMessages"
-    }},
-    {{
-        "name": "sendTextFunction",
-        "operation": "http://myapis.org/inboxapi.json#sendText"
-    }}
-],
-"states": [
-    {{
-        "name": "CheckInbox",
-        "type": "operation",
-        "actionMode": "sequential",
-        "actions": [
-            {{
-                "functionRef": "checkInboxFunction"
-            }}
-        ],
-        "transition": "SendTextForHighPriority"
-    }},
-    {{
-        "name": "SendTextForHighPriority",
-        "type": "foreach",
-        "inputCollection": "${{ .messages }}",
-        "iterationParam": "singlemessage",
-        "actions": [
-            {{
-                "functionRef": {{
-                    "refName": "sendTextFunction",
-                    "arguments": {{
-                        "message": "${{ .singlemessage }}"
-                    }}
-                }}
-            }}
-        ],
-        "end": true
-    }}
-]
-}}
-```
-
-Example3:
-INPUT:
-This example shows off the Switch State and the subflow action.
-The workflow is started with application information data as input:
-OUTPUT
-```json
-{{
-   "id": "applicantrequest",
-   "version": "1.0",
-   "specVersion": "0.8",
-   "name": "Applicant Request Decision Workflow",
-   "description": "Determine if applicant request is valid",
-   "start": "CheckApplication",
-   "functions": [
-     {{
-        "name": "sendRejectionEmailFunction",
-        "operation": "http://myapis.org/applicationapi.json#emailRejection"
-     }}
-   ],
-   "states":[
-      {{
-         "name":"CheckApplication",
-         "type":"switch",
-         "dataConditions": [
-            {{
-              "condition": "${{ .applicants | .age >= 18 }}",
-              "transition": "StartApplication"
-            }},
-            {{
-              "condition": "${{ .applicants | .age < 18 }}",
-              "transition": "RejectApplication"
-            }}
-         ],
-         "defaultCondition": {{
-            "transition": "RejectApplication"
-         }}
-      }},
-      {{
-        "name": "StartApplication",
-        "type": "operation",
-        "actions": [
-          {{
-            "subFlowRef": "startApplicationWorkflowId"
-          }}
-        ],
-        "end": true
-      }},
-      {{
-        "name":"RejectApplication",
-        "type":"operation",
-        "actionMode":"sequential",
-        "actions":[
-           {{
-              "functionRef": {{
-                 "refName": "sendRejectionEmailFunction",
-                 "arguments": {{
-                   "applicant": "${{ .applicant }}"
-                 }}
-              }}
-           }}
-        ],
-        "end": true
-    }}
-   ]
-}}
-```
-{format_instructions}
-
-Make sure that all required fields are always present in your output.
-
-This is the context that you have:
 {context}
 '''
