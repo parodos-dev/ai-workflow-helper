@@ -53,7 +53,12 @@ function setJsonData(data, valid) {
 async function displayJsonWorkflow() {
    const response = await fetch(`/chat/${currentSessionId}/workflow`);
    const workflow = await response.json();
-   setJsonData(JSON.stringify(workflow.document, null, 2))
+   setJsonData(JSON.stringify(workflow.document, null, 2), workflow.valid)
+
+   render_workflow(
+        document.getElementById("renderWorkflow"),
+        JSON.stringify(workflow.document));
+
 }
 
 // Display messages in the chat area
