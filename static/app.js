@@ -50,23 +50,31 @@ function setJsonData(data, valid) {
     container.innerHTML = ((valid) ? '✅' : '❌');
 }
 
-async function displayJsonWorkflow() {
-   const response = await fetch(`/chat/${currentSessionId}/workflow`);
-   const workflow = await response.json();
+
+async function setJsonWorkflow(workflow) {
    setJsonData(JSON.stringify(workflow.document, null, 2), workflow.valid)
 
    render_workflow(
         document.getElementById("renderWorkflow"),
         JSON.stringify(workflow.document));
-
 }
 
-// Display messages in the chat area
-function displayMessages(messages) {
+async function displayJsonWorkflow() {
+   const response = await fetch(`/chat/${currentSessionId}/workflow`);
+   const workflow = await response.json();
+   setJsonWorkflow(workflow);
+}
+
+function resetMessages(messages) {
     const chatMessages = document.getElementById('chatMessages');
     while (chatMessages.firstChild) {
         chatMessages.removeChild(chatMessages.firstChild);
     }
+}
+
+// Display messages in the chat area
+function displayMessages(messages) {
+    resetMessages(messages);
     messages.forEach(message => {
         const messageDiv = createElement('div', `message ${message.type}`);
         messageDiv.innerHTML = marked.parse(message.content);
@@ -79,7 +87,6 @@ function displayMessages(messages) {
 
 // Send a message and handle streaming response
 async function sendMessage(message) {
-
 
     const chatMessages = document.getElementById('chatMessages');
     const hummanMessageDiv = createElement('div', 'message');
@@ -121,15 +128,16 @@ async function sendMessage(message) {
     return { messages: [{ type: 'ai', content: aiMessage }] };
 }
 
+function reset(){
+    currentSessionId = null;
+    resetMessages([]);
+    document.getElementById("renderWorkflow").innerHTML = "";
+    document.getElementById("workflowCode").innerHTML = "";
+}
 
 // Event listeners
 document.getElementById('newChatButton').addEventListener('click', () => {
-    const input = document.getElementById('newChatInput');
-    if (input.value.trim()) {
-        currentSessionId = null;
-        sendMessage(input.value);
-        input.value = '';
-    }
+    reset()
 });
 
 document.getElementById('sendButton').addEventListener('click', () => {
