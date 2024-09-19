@@ -79,6 +79,13 @@ function displayMessages(messages) {
 
 // Send a message and handle streaming response
 async function sendMessage(message) {
+
+
+    const chatMessages = document.getElementById('chatMessages');
+    const hummanMessageDiv = createElement('div', 'message');
+    chatMessages.appendChild(hummanMessageDiv);
+    hummanMessageDiv.innerHTML = marked.parse(message);
+
     const url = currentSessionId
         ? `/chat/${currentSessionId}`
         : 'chat';
@@ -95,8 +102,8 @@ async function sendMessage(message) {
     // This is for streaming response
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
+
     let aiMessage = '';
-    const chatMessages = document.getElementById('chatMessages');
     const aiMessageDiv = createElement('div', 'message ai');
     chatMessages.appendChild(aiMessageDiv);
     while (true) {
@@ -131,6 +138,12 @@ document.getElementById('sendButton').addEventListener('click', () => {
         sendMessage(input.value);
         input.value = '';
     }
+});
+
+// Resize textarea by default
+document.getElementById('messageInput').addEventListener('input', function(e) {
+    e.target.style.height = 'auto'; // Reset height
+    e.target.style.height = e.target.scrollHeight + 'px'; 
 });
 
 // Initial load
