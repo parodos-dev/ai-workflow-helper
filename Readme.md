@@ -14,9 +14,9 @@ The POC employs the following components:
 -  Ollama for serving Language Model (LLM) models
 -  FAISSDB for storing embeddings required by Retrieval-Augmented Generation
    (RAG)
--  Python terminal application using Click framework, interacting with Ollama
-   through Langchain ecosystem
-
+-  Python terminal application using Click framework
+-  API for interact with chats.
+-  Small web-app to interact with the system
 
 # Commands
 
@@ -43,84 +43,14 @@ sequenceDiagram
     System->>FAISSDB: Store embeddings
 ```
 
-## Chat
+## run
 
 ```
-python main.py load_data "Message"
+python main.py run
 ```
 
-This will do a few things:
-
-This will:
-
-1. Query the FAISSDB for relevant topics based on user input.
-2. Generate system messages with some information to share context with LLM.
-3. Send all information to Ollama, which responds with data.
-4. Parse output and extract Workflow JSON information. If correct, validate
-   against serverless workflow JSON schema. If it's not correct, system will
-   iterate 5 times to fix the workflow.
-
-```mermaid
-flowchart TD
-    A[Start] --> B[Check FAISSDB for relevant topics]
-    B --> C[Create system messages]
-    C --> E[Asking Ollama for the workflow specification]
-    E --> G[Parse the output]
-    G --> H{Is the provided Workflow JSON correct?}
-
-    H -- Yes --> I[transform to yaml]
-    I --> J[End]
-
-    H -- No --> K[Ask Ollama to fix JSON with follow-ups]
-    K --> L[Attempt 5 times max]
-    L --> G
-    L --> |Exceeded 5 attempts| M[End with error]
-```
-
-
-Example output:
-
-```
-$ --> MESSAGE=$(cat /tmp/message)
-$ --> echo $MESSAGE
-I would like to get a serverless wofklow which make a request to https://httpbin.org/headers. if the reuqest is 200 OK, please get the response.headers.host from the json, and make another request to https://acalustra.com/provider/post.
-$ --> python main.py chat "$MESSAGE"
-USER_AGENT environment variable not set, consider setting it to identify your requests.
-Query send was:
-
-    I would like to get a serverless wofklow which make a request to
-    https://httpbin.org/headers. if the reuqest is 200 OK, please get the
-    response.headers.host from the json, and make another request to
-    https://acalustra.com/provider/post.
-
-The response is:
- do:
--   requestHeaders:
-        call: http
-        with:
-            endpoint: https://httpbin.org/headers
-            method: get
--   checkStatus:
-        switch:
-        -   case1:
-                then: processResponse
-                when: .status == 200
--   processResponse:
-        set:
-            host: .headers.host
--   postToProvider:
-        call: http
-        with:
-            body:
-                host: '{{ .host }}'
-            endpoint: https://acalustra.com/provider/post
-            method: post
-document:
-    dsl: 1.0.0-alpha1
-    name: get-host-and-post-to-provider
-    namespace: examples
-    version: 1.0.0-alpha1
-```
+This will create a web server on port 5000, and user can use the browser to
+iterate over it.
 
 # Environment Variables
 
@@ -130,9 +60,15 @@ document:
 | `OLLAMA_URL`            | `http://localhost:11434`                                     | Base URL for Ollama API.                      |
 | `FAISS_DB`              | `/tmp/db_faiss`                                              | Path or reference to the local FAISS database.|
 | `WORKFLOW_SCHEMA_URL`   | `https://raw.githubusercontent.com/serverlessworkflow/specification/main/schema/workflow.yaml` | URL for the serverless workflow JSON schema. |
+| `SQLITE`                | `chats.db`                                                   | path to store previous chats                  |
 
 
+# Technology
 
+## Few shot prompting
+
+This application uses the few prompting examples technique to create accurate
+workflows
 
 ## FAQ
 
