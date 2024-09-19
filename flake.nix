@@ -11,6 +11,33 @@
       (system:
         let
 
+          iso639 = pkgs.python3Packages.buildPythonPackage rec {
+            name = "python-iso639";
+            pname = "python-iso639";
+            version="2024.2.7";
+            pyproject=true;
+
+            src = pkgs.python3Packages.fetchPypi {
+              inherit pname version;
+              sha256 = "sha256-wyMjM0jDTVfGAePm2CQIjkkolry5emGof32TQBowU3c=";
+            };
+            build-system = [ pkgs.python3Packages.poetry-core ];
+            dependencies = [
+              pkgs.python3Packages.setuptools
+            ];
+            propagatedBuildInputs =  [ ];
+            # pythonImportsCheck = [  ];
+            # pythonRuntimeDepsCheckHook = ''
+            #   echo "test"
+            # '';
+
+            # pythonRuntimeDepsCheck = ''
+            #   ls -lh
+            #   echo "hello"
+            # '';
+            doCheck = false;
+          };
+
           ibmCosSDKCore = pkgs.python3Packages.buildPythonPackage rec {
             name = "ibm-cos-sdk-core";
             pname = "ibm-cos-sdk-core";
@@ -180,6 +207,10 @@
             }))
             ibmWatsonAI
             langchain-ibm
+            unstructured
+            emoji
+            iso639
+            langdetect
           ];
 
         in

@@ -75,7 +75,8 @@ def load_data(obj, file_path):
         click.echo(f"cannot read file-path {e}")
         sys.exit(1)
 
-    documents = obj.ollama.parse_document(content)
+    splitter = Retriever.get_splitters(file_path)
+    documents = obj.ollama.parse_document(splitter, content)
 
     if len(documents) == 0:
         click.echo("The len of the documents is 0")
@@ -111,13 +112,13 @@ def sample_request(obj):
     session_id = response.headers.get('session_id')
     click.echo(f"The session_id is: {session_id}")
 
-    url = f"http://localhost:5000/chat/{session_id}"
-    data["input"] = (
-        "Could you add a kafka message at the end of the workflow"
-        "with the response?")
-    response = requests.post(url, json=data, headers=headers, stream=True)
-    for line in response.iter_lines():
-        print(line.decode('utf-8'))
+    # url = f"http://localhost:5000/chat/{session_id}"
+    # data["input"] = (
+    #     "Could you add a kafka message at the end of the workflow"
+    #     "with the response?")
+    # response = requests.post(url, json=data, headers=headers, stream=True)
+    # for line in response.iter_lines():
+    #     print(line.decode('utf-8'))
 
 
 # @TODO move this method to the services.

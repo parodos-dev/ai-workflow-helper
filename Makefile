@@ -13,7 +13,7 @@ project-run:
 load-data:
 	python main.py load-data specification.md
 	python main.py load-data examples.md
-
+	python main.py load-data https://sonataflow.org/serverlessworkflow/latest/
 
 clean-data:
 	rm -rf chats.db

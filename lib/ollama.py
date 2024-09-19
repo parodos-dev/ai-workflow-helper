@@ -4,7 +4,7 @@
 
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_openai import ChatOpenAI
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter, MarkdownTextSplitter, HTMLHeaderTextSplitter
 
 
 class Ollama():
@@ -47,12 +47,12 @@ class Ollama():
         return self._embeddings
 
     @classmethod
-    def parse_document(cls, content):
+    def parse_document(cls, splitter, content):
         # @TODO here the splitter can be different, and we should check the
         # content[].metadata.source filename type, so:
         # - Markdown: https://api.python.langchain.com/en/latest/text_splitters_api_reference.html#module-langchain_text_splitters.markdown # noqa: E501
         # - HTML: https://api.python.langchain.com/en/latest/text_splitters_api_reference.html#module-langchain_text_splitters.html # noqa: E501
 
-        text_splitter = RecursiveCharacterTextSplitter()
+        text_splitter = splitter()
         documents = text_splitter.split_documents(content)
         return documents
