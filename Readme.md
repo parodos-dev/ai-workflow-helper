@@ -84,3 +84,30 @@ functions][https://huggingface.co/ibm-granite/granite-20b-functioncalling]
 - Be able to ask for a workflow with openapi specs from internet and generate
   the workflow, but functions are not enabled.
 - Creating diagrams directly from the workflows.
+
+
+## Sample prompts for the app:
+
+This is a collection of prompts that can be used in this tool:
+
+## SpaceX launch
+
+A simple workflow wich get the latest informatin from an spaceX launch and post
+to other place:
+
+~~~
+I need to generate the following serverelss workflow:
+
+First I need to check the next SpaceX launch, to obtain the data I use the following bash command:
+
+```
+NEXT_LAUNCH=$(curl https://api.spacexdata.com/v5/launches/next | jq .date_utc)
+```
+
+after this, I want to save the information in my server, so I normally POST the following inforamtion:
+
+curl -d '{"next_launch": "'${NEXT_LAUNCH}'"}' https://httpbin.org/post
+
+could you generate the workflow please?
+
+~~~
