@@ -146,12 +146,14 @@ document.getElementById('sendButton').addEventListener('click', () => {
         sendMessage(input.value);
         input.value = '';
     }
+    input.innerHTML = "";
+    input.style.height = "auto";
 });
 
 // Resize textarea by default
 document.getElementById('messageInput').addEventListener('input', function(e) {
     e.target.style.height = 'auto'; // Reset height
-    e.target.style.height = e.target.scrollHeight + 'px'; 
+    e.target.style.height = e.target.scrollHeight + 'px';
 });
 
 // Initial load
