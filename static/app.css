@@ -62,9 +62,9 @@ body, html {
     transition: width 0.3s ease;
 }
 
-.function-column:hover {
-    cursor: col-resize;
-}
+/* .function-column:hover { */
+/*     cursor: col-resize; */
+/* } */
 
 #chatList {
     list-style-type: none;

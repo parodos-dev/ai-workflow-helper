@@ -166,7 +166,7 @@ The types can be:
 - rest: a combination of the function/service OpenAPI definition document URI and the particular service operation that needs to be invoked, separated by a '#'. For example https://petstore.swagger.io/v2/swagger.json#getPetById.
 - rpc:  a combination of the gRPC proto document URI and the particular service name and service method name that needs to be invoked, separated by a '#'. For example file://myuserservice.proto#UserService#ListUsers.
 
-To using the functions inside the state array, should be like this:
+To using the functions arguments inside the state array, should be like this:
 
 ```
 {{
@@ -180,22 +180,9 @@ To using the functions inside the state array, should be like this:
 }}
 ```
 
-Where arguments can be build with state data using the dot notation.
+Where arguments can be build with state data using the dot notation. Is required that arguments are inside the functionRef object.
 
 ## Error handling
-
-When errors happens in the serverless workflow state, need to be managed by the field `onErrors`:
-
-```
-"onErrors": [
-    {{
-      "errorRef": "notAvailable",
-      "transition": "logError"
-    }}
-],
-```
-
-If no error, will jump to next transition defined on the `state.transition` field. Need to make sure, that the transition state is present in the array. The name for the transition should be part of any name inside the states array, it's mandatory. In this case, a state with name: logError need to be present in the output.
 
 Errors are defined in the root of the document, like:
 
@@ -211,6 +198,20 @@ Errors are defined in the root of the document, like:
 }}
 ],
 ```
+
+When errors happens in the serverless workflow state, need to be managed by the field `onErrors`:
+
+```
+"onErrors": [
+    {{
+      "errorRef": "notAvailable",
+      "transition": "logError"
+    }}
+],
+```
+
+If no error, will jump to next transition defined on the `state.transition` field. Need to make sure, that the transition state is present in the array. The name for the transition should be part of any name inside the states array, it's mandatory. In this case, a state with name: logError need to be present in the output.
+
 ## State
 
 A good state will looks like this:
