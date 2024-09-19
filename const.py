@@ -241,9 +241,4 @@ It contains some actions with functions defined in the root, this array should a
 It contains a transition key for the next step if the state runs correctly. This is always needed, the only case when is not needed is if the `end` is true. The transaction value should be one of the names in the array of the states.
 It contains the `OnErrors` key, which is optional, but make sure that the state error is handled correctly.
 It contais a valid `type` and `name` which is defined in the jsonschema.
-
-## Context:
-
-This information it might be relevant for building a serverless workflow. Please only consider the json data
-{context}
 '''

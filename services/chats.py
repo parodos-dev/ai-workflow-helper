@@ -104,6 +104,12 @@ class ChatChain():
             ]
         )
 
+        rag_prompt = ChatPromptTemplate.from_messages([
+            ("system", "This is additional context from the retriever:"),  
+            ("system", "{context}"),
+            ("system", "Use this information to enhance your responses when relevant.")
+        ])
+
         few_shot_prompt = FewShotChatMessagePromptTemplate(
             example_prompt=example_prompt,
             examples=EXAMPLES,
@@ -112,6 +118,7 @@ class ChatChain():
         prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", SYSTEM_MESSAGE),
+                rag_prompt,
                 few_shot_prompt,
                 MessagesPlaceholder(variable_name="history", optional=True),
                 ("human", "{input}"),
