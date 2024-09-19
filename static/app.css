@@ -1,5 +1,4 @@
 :root {
-    --primary-color: #7C93C3;
     --primary-light: #A9B8D6;
     --primary-dark: #5A6E9C;
     --background-color: #F0F2F7;
@@ -43,16 +42,28 @@ body, html {
     flex-direction: column;
     padding: 20px;
     background-color: var(--background-color);
+    min-width: 50%;
+    max-width: 70%;
+    resize: horizontal;
 }
 
+
 .function-column {
-    width: var(--function-column-width);
-    min-width: var(--function-column-width);
-    width: 300px;
+    flex-grow: 1;
+    min-width: 200px;
     background-color: var(--sidebar-color);
     padding: 20px;
     overflow-y: auto;
     border-left: 1px solid var(--primary-light);
+    resize: horizontal;
+}
+
+.main-content, .function-column {
+    transition: width 0.3s ease;
+}
+
+.function-column:hover {
+    cursor: col-resize;
 }
 
 #chatList {
@@ -118,7 +129,6 @@ body, html {
     border-radius: 10px;
     line-height: 1.5;
 }
-
 .message.human {
     background-color: var(--message-human);
     align-self: flex-end;
@@ -165,4 +175,3 @@ h2 {
     color: var(--primary-dark);
     margin-bottom: 20px;
 }
-
