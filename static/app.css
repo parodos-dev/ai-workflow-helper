@@ -137,6 +137,7 @@ body, html {
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
+.message.ai,
 .message.AIMessageChunk {
     background-color: var(--message-ai);
     align-self: flex-start;
