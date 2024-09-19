@@ -89,7 +89,7 @@ function displayMessages(messages) {
 async function sendMessage(message) {
 
     const chatMessages = document.getElementById('chatMessages');
-    const hummanMessageDiv = createElement('div', 'message');
+    const hummanMessageDiv = createElement('div', 'message human');
     chatMessages.appendChild(hummanMessageDiv);
     hummanMessageDiv.innerHTML = marked.parse(message);
 
@@ -111,7 +111,7 @@ async function sendMessage(message) {
     const decoder = new TextDecoder();
 
     let aiMessage = '';
-    const aiMessageDiv = createElement('div', 'message ai');
+    const aiMessageDiv = createElement('div', 'message AIMessageChunk');
     chatMessages.appendChild(aiMessageDiv);
     while (true) {
         const { done, value } = await reader.read();

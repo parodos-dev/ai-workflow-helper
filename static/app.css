@@ -129,6 +129,7 @@ body, html {
     border-radius: 10px;
     line-height: 1.5;
 }
+
 .message.human {
     background-color: var(--message-human);
     align-self: flex-end;
@@ -136,7 +137,7 @@ body, html {
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-.message.ai {
+.message.AIMessageChunk {
     background-color: var(--message-ai);
     align-self: flex-start;
     margin-right: auto;
