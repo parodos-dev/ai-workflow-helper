@@ -3,7 +3,7 @@
 This is a Proof-of-Concept (POC) project designed to aid developers in crafting
 Orchestrator workflows. The primary objectives are to:
 
-1. Populate an embedded database with documentation about Orchestrator & Kogito
+1. Populate an embedded database with documentation about Orchestrator & serverless
    workflows.
 2. Enable the system to generate YAML workflows based on user input.
 
