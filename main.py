@@ -3,6 +3,7 @@ import logging
 import sys
 import yaml
 import requests
+import os
 
 from api.urls import urls
 from config import Config
@@ -26,7 +27,7 @@ from langchain.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnablePassthrough
 
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+logging.basicConfig(stream=sys.stderr, level=os.environ.get('LOG_LEVEL', 'INFO').upper())
 
 
 class Context:

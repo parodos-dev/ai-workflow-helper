@@ -36,12 +36,16 @@ def get_prompt_details():
             ("human", "{input}"),
         ]
     )
-
     return prompt
 
 
 def format_docs(docs):
-    return "\n\n".join(doc.page_content for doc in docs)
+    logging.info("The number of docs added to the request are {0}".format(len(docs)))
+    logging.debug("Files added to the prompt: {}".format(", ".join(
+        doc.metadata.get('source') for doc in docs)))
+    result = "\n".join("Source: {}\nContent:\n{}".format(
+        doc.metadata.get('source'), doc.page_content) for doc in docs)
+    return result
 
 
 def get_workflow_for_session(ctx, session_id):
@@ -105,9 +109,13 @@ class ChatChain():
         )
 
         rag_prompt = ChatPromptTemplate.from_messages([
-            ("system", "This is additional context from the retriever:"),  
+            ("system", "This is additional context from the retriever:"),
             ("system", "{context}"),
             ("system", "Use this information to enhance your responses when relevant.")
+        ])
+
+        schema_prompt = ChatPromptTemplate.from_messages([
+            ("system", "Ensure that your response compiles with the following schema definition: ```{schema}```"),
         ])
 
         few_shot_prompt = FewShotChatMessagePromptTemplate(
@@ -121,6 +129,7 @@ class ChatChain():
                 rag_prompt,
                 few_shot_prompt,
                 MessagesPlaceholder(variable_name="history", optional=True),
+                schema_prompt,
                 ("human", "{input}"),
             ]
         )

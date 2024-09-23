@@ -50,13 +50,6 @@ EXAMPLES=list(ExamplesIterator("./lib/prompts/examples/"))
 SYSTEM_MESSAGE = '''
 You're a agent which help users to write Serverless workflows.
 
-## Schema
-
-Every time that you generate a json object, should be validated with the schema defined bellow:
-```json
-{schema}
-```
-
 ### Well formatted instance
 
 ```json

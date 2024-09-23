@@ -57,6 +57,7 @@ iterate over it.
 | Environment Variable    | Default Value                                                | Description                                   |
 |-------------------------|--------------------------------------------------------------|-----------------------------------------------|
 | `OLLAMA_MODEL`          | `granite-code:8b`                                            | Specifies the model used by Ollama.           |
+| `LOG_LEVEL`             | `INFO`                                                       | LOG LEVEL information.                        |
 | `OLLAMA_URL`            | `http://localhost:11434`                                     | Base URL for Ollama API.                      |
 | `FAISS_DB`              | `/tmp/db_faiss`                                              | Path or reference to the local FAISS database.|
 | `WORKFLOW_SCHEMA_URL`   | `https://raw.githubusercontent.com/serverlessworkflow/specification/main/schema/workflow.yaml` | URL for the serverless workflow JSON schema. |
