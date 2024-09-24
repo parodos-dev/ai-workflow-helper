@@ -12,7 +12,7 @@ project-run:
 
 load-data:
 	python main.py load-data rag_data/specification_output.md
-	python main.py load-data examples.md
+	python main.py load-data rag_data/examples.md
 	python main.py load-data https://sonataflow.org/serverlessworkflow/latest/
 
 clean-data:
