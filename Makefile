@@ -11,7 +11,7 @@ project-run:
 	cd $(WORKFLOW_NAME) && kn run
 
 load-data:
-	python main.py load-data specification.md
+	python main.py load-data rag_data/specification_output.md
 	python main.py load-data examples.md
 	python main.py load-data https://sonataflow.org/serverlessworkflow/latest/
 
