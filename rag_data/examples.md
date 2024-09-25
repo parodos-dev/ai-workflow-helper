@@ -37,7 +37,8 @@ assumed to be the name of the person to greet:
      "end": true
   }
 ]
-}```
+}
+```
 
 
 # Example 1
@@ -95,7 +96,8 @@ defined “greeting” function.
      "end": true
   }
 ]
-}```
+}
+```
 
 
 # Example 2
@@ -140,7 +142,8 @@ passed in as the workflow data input:
  "end": true
 }
 ]
-}```
+}
+```
 
 
 # Example 3
@@ -180,7 +183,8 @@ execution in this case as it is an end state).
      "end": true
   }
 ]
-}```
+}
+```
 
 
 # Example 4
@@ -222,7 +226,8 @@ results.
    "end": true
   }
  ]
-}```
+}
+```
 
 
 # Example 5
@@ -261,7 +266,8 @@ property to continue.
    "end": true
   }
  ]
-}```
+}
+```
 
 
 # Example 6
@@ -342,7 +348,8 @@ state.
       "end": true
   }
 ]
-}```
+}
+```
 
 
 # Example 7
@@ -409,7 +416,8 @@ input:
         "end": true
     }
    ]
-}```
+}
+```
 
 
 # Example 8
@@ -521,7 +529,8 @@ the workflow can transition to the “ApplyOrder” state.
    "end": true
 }
 ]
-}```
+}
+```
 
 
 # Example 9
@@ -657,7 +666,8 @@ via another separate serverless function call.
     "end": true
   }
   ]
-}```
+}
+```
 
 
 # Example 10
@@ -710,7 +720,8 @@ orders that need to be provisioned by our workflow:
     }
 }
 ]
-}```
+}
+```
 
 
 # Example 11
@@ -818,7 +829,8 @@ the workflow is started.
     "terminate": true
 }
 }]
-}```
+}
+```
 
 
 # Example 12
@@ -902,7 +914,8 @@ teacher.
     }
 }
 ]
-}```
+}
+```
 
 
 # Example 13
@@ -1007,7 +1020,8 @@ decision results.
             "end": true
         }
     ]
-}```
+}
+```
 
 
 # Example 14
@@ -1063,7 +1077,8 @@ March 20th 2020.
           "end": true
         }
     ]
-}```
+}
+```
 
 
 # Example 15
@@ -1124,7 +1139,8 @@ and send them a text message when there are important emails.
         "end": true
     }
 ]
-}```
+}
+```
 
 
 # Example 16
@@ -1178,7 +1194,8 @@ event as well.
             "end": true
         }
     ]
-}```
+}
+```
 
 
 # Example 17
@@ -1267,7 +1284,8 @@ modify multiple workflows.
       "maxAttempts": 10
     }
   ]
-}```
+}
+```
 
 
 # Example 18
@@ -1432,7 +1450,8 @@ patient information, for example:
       "operation": "http.myorg.io/ordersservices.json#calcelorder"
     }
   ]
-}```
+}
+```
 
 
 # Example 19
@@ -1533,7 +1552,8 @@ automatically closed.
       "operation": "http.myorg.io/ordersservices.json#produceReport"
     }
   ]
-}```
+}
+```
 
 
 # Example 20
@@ -1600,7 +1620,8 @@ correlate events send by our sensors by the room it is in.
    "source": "my/car"
   }
  ]
-}```
+}
+```
 
 
 # Example 21
@@ -1746,7 +1767,8 @@ the vitals every 1 second.
  ],
  "functions": "file://books/lending/functions.json",
  "events": "file://books/lending/events.json"
-}```
+}
+```
 
 
 # Example 22
@@ -1805,7 +1827,8 @@ to checking out the book and notifying the lender.
    "transition": "Check if full"
   }
  ]
-}```
+}
+```
 
 
 # Example 23
@@ -1883,7 +1906,8 @@ data input:
    "operation":"http://myapis.org/customerapis.json#notifyCustomer"
   }
  ]
-}```
+}
+```
 
 
 # Example 24
@@ -1934,5 +1958,6 @@ services:
    "operation": "banking.yaml#smallerTransation"
   }
  ]
-}```
+}
+```
 
