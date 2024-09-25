@@ -99,16 +99,51 @@ to other place:
 ~~~
 I need to generate the following serverelss workflow:
 
-First I need to check the next SpaceX launch, to obtain the data I use the following bash command:
+The state data will have the information of some companies stock info. like
+
+{"stock": ["IBM", "APPL"]}
+
+To get the stock info, the  request will be like this:
+
+https://www.alphavantage.co/query?function=OVERVIEW&symbol=IBM&apikey=demo
+
+from this data, I need to select the information like:
+
+echo '$RESULT' | jq '.52WeekHigh'
+
+You need to iterate over the stock key, and push all information by each key.
+
+From there, you need to put that information to here using the following format:
+
+curl https://acalustra.com/stocks \
+    -H "content-type: application/json" \
+    -d '[{"IBM": $HighestValue}, {"AAPL": $HighestValue}]'
+~~~
+
+
+
+## Financial data
+
+This workflow checks how to get the information from financial data.
+
+~~~
+I need to create a workflow which checks the financial data for a list of companies and pushed to my service.
+
+The input of the workflow will be like:
+
+{"companies": ["IBM", "APPL"]}
+
+For each company, the data can be get from the following url, where symbol is the company information:
+
+curl -s "https://www.alphavantage.co/query?function=OVERVIEW&symbol=IBM&apikey=demo" | jq '."52WeekHigh"'
+
+When you iterate to all the companies the output should be:
 
 ```
-NEXT_LAUNCH=$(curl https://api.spacexdata.com/v5/launches/next | jq .date_utc)
+[
+    {"company": "IBM", "high": $52WeekHighValue},
+    {"company": "APPL", "high": $52WeekHighValue},
+]
 ```
-
-after this, I want to save the information in my server, so I normally POST the following inforamtion:
-
-curl -d '{"next_launch": "'${NEXT_LAUNCH}'"}' https://httpbin.org/post
-
-could you generate the workflow please?
-
+And this  result should be post to: "http://acalustra.com/financialData/post"
 ~~~

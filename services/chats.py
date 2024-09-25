@@ -108,10 +108,6 @@ class ChatChain():
             ]
         )
 
-        rag_prompt = ChatPromptTemplate.from_messages([
-            ("system", "This is additional context from the retriever:\n {context} Use this information if it's relevant, if not discard it."),
-        ])
-
         schema_prompt = ChatPromptTemplate.from_messages([
             ("system", "Ensure that your response compiles with the following schema definition: ```{schema}```"),
         ])
@@ -125,7 +121,6 @@ class ChatChain():
             [
                 schema_prompt,
                 ("system", SYSTEM_MESSAGE),
-                # rag_prompt,
                 few_shot_prompt,
                 MessagesPlaceholder(variable_name="history", optional=True),
                 ("human", "{input}"),
