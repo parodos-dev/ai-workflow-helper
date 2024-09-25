@@ -27,7 +27,7 @@ async function fetchChats() {
     const chatList = document.getElementById('chatList');
     chatList.innerHTML = '';
     chats.forEach(chat => {
-        const li = createElement('li', '', chat);
+        const li = createElement('li', '', chat.substr(chat.length - 5));
         li.addEventListener('click', () => loadChat(chat));
         chatList.appendChild(li);
     });
@@ -45,7 +45,6 @@ function setJsonData(data, valid) {
     container = document.getElementById("workflowCode");
     container.innerHTML = data
     hljs.highlightBlock(container);
-    
     validContainer = document.getElementById("jsonValid");
     invalidContainer = document.getElementById("jsonInValid");
 
@@ -127,6 +126,7 @@ async function sendMessage(message) {
     let aiMessage = '';
     const aiMessageDiv = createElement('div', 'message AIMessageChunk');
     chatMessages.appendChild(aiMessageDiv);
+    let startTime = Date.now();
     while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -136,6 +136,10 @@ async function sendMessage(message) {
         aiMessageDiv.innerHTML = marked.parse(aiMessage);
         chatMessages.scrollTop = chatMessages.scrollHeight;
         hljs.highlightAll();
+        let timeTaken = Date.now() - startTime;
+        if (timeTaken >8000) {
+            displayJsonWorkflow();
+        }
     }
 
     loadChat(currentSessionId);

@@ -9,7 +9,7 @@
     --input-background: #FFFFFF;
     --button-color: #5A6E9C;
     --button-text: #FFFFFF;
-    --sidebar-width: 250px;
+    --sidebar-width: 175px;
     --function-column-width: 400px;
 }
 
@@ -20,6 +20,7 @@ body, html {
     height: 100%;
     background-color: var(--background-color);
     color: var(--text-color);
+    font-size: 18px;
 }
 
 .container {

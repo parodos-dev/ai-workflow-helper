@@ -83,7 +83,7 @@ please return the serverless workflow fixed"""
         input_variables=["json_data", "validation_errors"],
         template=template
     )
-    yield "Validation started\n"
+    yield "Validation started\n\n"
     for i in range(5):
         try:
             document = validator.invoke(ai_response)
@@ -101,7 +101,7 @@ please return the serverless workflow fixed"""
             logging.error(
                     "Workflow is not correct has some JSON issues: {0}".format(
                         e.get_error()))
-            yield "Parsing output stage {0} of 5, with {1} errors\n".format(
+            yield "<b>Parsing output stage {0} of 5, with {1} errors</b>\n\n".format(
                     i, e.get_number_of_errors())
             formatted_prompt = prompt.format(
                     json_data=json.dumps(e.data),
