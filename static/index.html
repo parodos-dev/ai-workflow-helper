@@ -28,7 +28,27 @@
             </div>
         </div>
         <div class="function-column">
-            <h2>Json Raw Data <div id="jsonValid" style="display: inline"></div></h2>
+            <h2>
+                Json Raw Data
+                <div id="jsonValid" style="display: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="green" width="24px" height="24px">
+                      <path d="M0 0h24v24H0z" fill="none"/>
+                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    </svg>
+                </div>
+                <div id="jsonInValid" style="display: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="red" width="24px" height="24px">
+                      <path d="M0 0h24v24H0V0z" fill="none"/>
+                      <path d="M18.3 5.71L12 12l6.29 6.29-1.41 1.42L12 13.41l-6.29 6.29-1.42-1.41L10.59 12 4.3 5.71 5.71 4.29 12 10.59l6.29-6.3 1.41 1.42z"/>
+                    </svg>
+                </div>
+                <div id="copyWorkflow" style="display: inline">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black" width="24px" height="24px">
+                      <path d="M0 0h24v24H0V0z" fill="none"/>
+                      <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                    </svg>
+                </div>
+            </h2>
             <div id="jsonWorkflow">
                 <pre><code id="workflowCode" class="language-json">
                 </code></pre>

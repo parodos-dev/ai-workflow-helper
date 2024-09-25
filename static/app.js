@@ -45,9 +45,17 @@ function setJsonData(data, valid) {
     container = document.getElementById("workflowCode");
     container.innerHTML = data
     hljs.highlightBlock(container);
+    
+    validContainer = document.getElementById("jsonValid");
+    invalidContainer = document.getElementById("jsonInValid");
 
-    container = document.getElementById("jsonValid");
-    container.innerHTML = ((valid) ? '✅' : '❌');
+    if (valid) {
+        validContainer.style.display = 'inline';
+        invalidContainer.style.display = 'none';
+    } else {
+        validContainer.style.display = 'none';
+        invalidContainer.style.display = 'inline-block';
+    }
 }
 
 
@@ -57,6 +65,12 @@ async function setJsonWorkflow(workflow) {
    render_workflow(
         document.getElementById("renderWorkflow"),
         JSON.stringify(workflow.document));
+}
+
+async function getJsonWorkflow() {
+   const response = await fetch(`/chat/${currentSessionId}/workflow`);
+   const workflow = await response.json();
+   return workflow
 }
 
 async function displayJsonWorkflow() {
@@ -155,6 +169,20 @@ document.getElementById('messageInput').addEventListener('input', function(e) {
     e.target.style.height = 'auto'; // Reset height
     e.target.style.height = e.target.scrollHeight + 'px';
 });
+
+
+document.getElementById('copyWorkflow').addEventListener('click', async function(e) {
+    const workflow = await getJsonWorkflow();
+    copyToClipboard(JSON.stringify(workflow.document));
+});
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    console.log('Text copied to clipboard');
+  }).catch(err => {
+    console.error('Failed to copy text: ', err);
+  });
+}
 
 // Initial load
 fetchChats();
