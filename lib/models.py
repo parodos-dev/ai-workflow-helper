@@ -1519,6 +1519,6 @@ class Model2(BaseModel):
 
 
 class SerVerlessWorkflow(BaseModel):
-    __root__: Model2 = Field(
+    __root__: Model1 = Field(
         ..., description='Serverless Workflow specification - workflow schema'
     )

@@ -4,7 +4,6 @@
 
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_openai import ChatOpenAI
-from langchain_text_splitters import RecursiveCharacterTextSplitter, MarkdownTextSplitter, HTMLHeaderTextSplitter
 
 
 class Ollama():

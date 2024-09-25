@@ -1,6 +1,7 @@
 import logging
+import json
 
-from const import SYSTEM_MESSAGE, EXAMPLES
+from const import SYSTEM_MESSAGE, EXAMPLES, REACT_MESSAGE
 from lib.models import SerVerlessWorkflow
 from lib.json_validator import JsonSchemaValidationException
 from lib.validator import ParsedOutputException
@@ -40,7 +41,8 @@ def get_prompt_details():
 
 
 def format_docs(docs):
-    logging.info("The number of docs added to the request are {0}".format(len(docs)))
+    logging.info("The number of docs added to the request are {0}".format(
+        len(docs)))
     logging.debug("Files added to the prompt: {}".format(", ".join(
         doc.metadata.get('source') for doc in docs)))
     result = "\n".join("Source: {}\nContent:\n{}".format(
@@ -56,9 +58,11 @@ def get_history(ctx, session_id):
     ctx.history_repo.set_session(session_id)
     return ctx.history_repo.messages
 
+
 # This function iterates over the json and try to fix it.
 def set_json_response(chain, session_id, ai_response, validator):
-    initial = True;
+    initial = True
+
     def set_workflow(doc, valid):
         if initial:
             WORKFLOWS[str(session_id)] = {
@@ -79,7 +83,7 @@ please return the serverless workflow fixed"""
         input_variables=["json_data", "validation_errors"],
         template=template
     )
-
+    yield "Validation started\n"
     for i in range(5):
         try:
             document = validator.invoke(ai_response)
@@ -89,15 +93,25 @@ please return the serverless workflow fixed"""
             set_workflow(document, True)
             return
         except (ParsedOutputException) as e:
-            logging.error(f"cannot get valid JSON document from the response: {e}")
+            logging.error(
+                f"cannot get valid JSON document from the response: {e}")
         except (JsonSchemaValidationException) as e:
+            logging.debug("Trying to validate: {0}".format(json.dumps(e.data)))
             set_workflow(e.data, False)
-            logging.error("workflow is not correct has some JSON issues")
-            formatted_prompt = prompt.format(json_data=e.data, validation_errors=e.get_error())
-            ai_response = chain.invoke({ "input": formatted_prompt })
+            logging.error(
+                    "Workflow is not correct has some JSON issues: {0}".format(
+                        e.get_error()))
+            yield "Parsing output stage {0} of 5, with {1} errors\n".format(
+                    i, e.get_number_of_errors())
+            formatted_prompt = prompt.format(
+                    json_data=json.dumps(e.data),
+                    validation_errors=e.get_error())
+            ai_response = chain.react(formatted_prompt)
+            logging.debug(f"react response: {ai_response}")
         except Exception as e:
             logging.error(f"Unexected exception on the workflow: {e}")
 
+    yield "Validation finished"
 
 class ChatChain():
     def get_prompt_details(cls):
@@ -129,10 +143,22 @@ class ChatChain():
 
         return prompt
 
+    def get_react_prompt(cls):
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", REACT_MESSAGE),
+                ("human", "{input}"),
+            ]
+        )
+
+        return prompt
+
     def __init__(self, llm, retriever, history, session_id):
         prompt = self.get_prompt_details()
+        self._llm = llm
         self._history_repo = history
-        self._config = {"configurable": {"session_id": "{0}".format(session_id)}}
+        self._config = {"configurable": {
+            "session_id": "{0}".format(session_id)}}
         self._chain = (
             {
                 "context": retriever | format_docs,
@@ -142,6 +168,17 @@ class ChatChain():
             }
             | prompt
             | llm)
+
+    def react(self, user_message):
+        prompt = self.get_react_prompt()
+        chain = (
+            {
+                "schema": lambda _: SerVerlessWorkflow.schema_json(),
+                "input": RunnablePassthrough(),
+            }
+            | prompt
+            | self._llm)
+        return chain.invoke({"input": user_message})
 
     @property
     def config(self):
@@ -168,18 +205,20 @@ class ChatChain():
 def get_response_for_session(ctx, session_id, user_message):
     retriever = ctx.repo.retriever
     llm = ctx.ollama.llm
-
+    chunk_string = lambda s, n=15: (s[i:i+n] for i in range(0, len(s), n))
     # @TODO check if this clone the thing to a new object.
     history_repo = ctx.history_repo
     history_repo.set_session(f"{session_id}")
-
+    yield "inital one"
     chain = ChatChain(llm, retriever, history_repo, session_id)
     ai_response = []
     result = chain.stream({"input": user_message})
 
     for x in result:
         ai_response.append(x.content)
-        yield x.content
+        yield str(x.content)
 
+    yield "\nChecking if json is correct and validation\n\n"
     full_ai_response = "".join(ai_response)
-    set_json_response(chain, session_id, full_ai_response, ctx.validator)
+    for x in set_json_response(chain, session_id, full_ai_response, ctx.validator):
+        yield str(x)

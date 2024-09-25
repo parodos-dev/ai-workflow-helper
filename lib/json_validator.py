@@ -2,6 +2,7 @@ from jsonschema import validate, ValidationError
 import requests
 import yaml
 import json
+import logging
 
 
 class JsonSchemaValidationException(Exception):
@@ -15,8 +16,17 @@ class JsonSchemaValidationException(Exception):
     def data(self):
         return self._data
 
+    def get_number_of_errors(self):
+        return len(self.errors.context)
+
     def get_error(self):
         messages = []
+        if len(self.errors.context) == 0:
+            logging.error("There are no errors, return the initial message")
+            return self.errors.message
+
+        logging.debug("Number the errors in validation '{}'".format(
+            len(self.errors.context)))
         errors = sorted(self.errors.context, key=lambda e: e.schema_path)
         for suberror in errors:
             messages.append((

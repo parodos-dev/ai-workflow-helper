@@ -1,14 +1,16 @@
 import os
 # import requests
 
-#from langchain_community.document_loaders import WebBaseLoader
+# from langchain_community.document_loaders import WebBaseLoader
 from langchain_community.document_loaders import TextLoader
 from langchain_community.document_loaders import RecursiveUrlLoader
 from langchain_community.document_loaders import UnstructuredMarkdownLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter, MarkdownTextSplitter, HTMLSectionSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_text_splitters import MarkdownTextSplitter
 
 
 class Retriever:
+
     @classmethod
     def fetch(cls, source):
         if cls.is_url(source):
@@ -17,7 +19,6 @@ class Retriever:
             return cls.fetch_from_file(source)
         else:
             raise ValueError(f"Source file '{source}' is not valid")
-
 
     @classmethod
     def get_splitters(cls, source):
@@ -50,7 +51,7 @@ class Retriever:
             url,
             max_depth=3,
         )
-        #loader = WebBaseLoader(url)
+        # loader = WebBaseLoader(url)
         return loader.load()
 
     @staticmethod

@@ -8,6 +8,27 @@ SAMPLE_QUERY = '''
     - If not, please send a HTTP POST request to https://acalustra.com/provider/post and request data should be the previous response.
 '''
 
+COMPLEX_QUERY = '''I need to create a workflow which checks the financial data for a list of companies and pushed to my service.
+
+The input of the workflow will be like:
+
+{"companies": ["IBM", "APPL"]}
+
+For each company, the data can be get from the following url, where symbol is the company information:
+
+curl -s "https://www.alphavantage.co/query?function=OVERVIEW&symbol=IBM&apikey=demo" | jq '."52WeekHigh"'
+
+When you iterate to all the companies the output should be:
+
+```
+[
+    {"company": "IBM", "high": $52WeekHighValue},
+    {"company": "APPL", "high": $52WeekHighValue},
+]
+```
+And this result should be post to: "http://acalustra.com/financialData/post"
+'''
+
 class ExamplesIterator:
     def __init__(self, directory):
         self.directory = directory
@@ -46,6 +67,88 @@ class ExamplesIterator:
             raise StopIteration
 
 EXAMPLES=list(ExamplesIterator("./lib/prompts/examples/"))
+
+REACT_MESSAGE = '''You're an react agent, your main priority is to fix the errors in the given Json by the user with a detailed error messages from them.
+
+The json need to follow the following jsonschema:
+
+```
+{schema}
+```
+At the same time, you need to take care with the following serverless workflow specific items:
+
+Instructions:
+1) First read the whole json and undertand that
+2) Understand the jsonschema errors if the user provide it.
+3) Think step by step, and see what are the possible errors and how to fix it.
+4) Validate the errors described below.
+5) Review your json output and check again recursively with the previous instructions.
+6) Respond to the user with the valid json.
+
+
+These are the common errors:
+Functions:
+
+In the root of the object, all the functions are specified, all of them should be used in state, errors, or events.
+
+Functions definitions are like this:
+```
+{{
+    "functions": [
+        {{
+          "name": "getIP",
+          "type": "custom",
+          "operation": "rest:get:https://ipinfo.io/json"
+        }},
+    ]
+}}
+```
+
+The types can be:
+- custom: where custom operation can be used, for example: `rest:get:https://ipinfo.io/json` will make a GET request to https://ipinfo.io/json or sysout:INFO will write something to the log.
+    The custom operations allowed are: `rest:get:`, `sysout:DEBUG`, `sysout:INFO`, `rest:post:`
+- rest: a combination of the function/service OpenAPI definition document URI and the particular service operation that needs to be invoked, separated by a '#'. For example https://petstore.swagger.io/v2/swagger.json#getPetById.
+- rpc:  a combination of the gRPC proto document URI and the particular service name and service method name that needs to be invoked, separated by a '#'. For example file://myuserservice.proto#UserService#ListUsers.
+
+To using the functions arguments inside the state array, should be like this:
+
+```
+{{
+  "functionRef": {{
+    "refName": "pushData",
+    "arguments": {{
+        "city": ".ip_info.city",
+        "ip": ".ip_info.ip"
+    }}
+  }},
+}}
+```
+
+You need to take care that all functionRef.refName should match with the name of one function in the functions definition.
+
+Transitions:
+
+State has next transition, if it's present you need to validate that matches with one name of state array.
+When defined errors, there is also a transition which need to be present too.
+
+Error handling
+
+Errors are defined in the root of the document, like:
+
+```
+"errors": [
+{{
+  "name": "notAvailable",
+  "code": "404"
+}},
+{{
+  "name": "notAllowed",
+  "code": "405"
+}}
+],
+```
+
+'''
 
 SYSTEM_MESSAGE = '''
 You're a agent which help users to write Serverless workflows.
