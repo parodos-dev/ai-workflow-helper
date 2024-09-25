@@ -1,9 +1,16 @@
-from jsonschema import validate, ValidationError
+from jsonschema import validate, ValidationError, Draft7Validator
 import requests
 import yaml
 import json
 import logging
 
+def format_error(error: ValidationError) -> dict:
+    return {
+        "path": " -> ".join(str(path) for path in error.path),
+        "message": error.message,
+        "schema_path": " -> ".join(str(path) for path in error.schema_path),
+        "instance": error.instance,
+    }
 
 class JsonSchemaValidationException(Exception):
 
@@ -17,23 +24,18 @@ class JsonSchemaValidationException(Exception):
         return self._data
 
     def get_number_of_errors(self):
-        return len(self.errors.context)
+        return len(self.errors)
 
     def get_error(self):
-        messages = []
-        if len(self.errors.context) == 0:
-            logging.error("There are no errors, return the initial message")
-            return self.errors.message
-
-        logging.debug("Number the errors in validation '{}'".format(
-            len(self.errors.context)))
-        errors = sorted(self.errors.context, key=lambda e: e.schema_path)
-        for suberror in errors:
-            messages.append((
-                '.'.join(str(item) for item in suberror.schema_path),
-                suberror.message))
-        res = '\n'.join("- {}: error {}".format(x, y) for x, y in messages)
-        return res
+        error_msg = [format_error(x) for x in self.errors]
+        output = ""
+        for i,x in enumerate(error_msg):
+            output += f"Error {i} in path {x['path']}\n"
+            output += f"Message: {x['message']}\n"
+            output += f"schema_path: {x['schema_path']}\n"
+            output += f"instance: {x['instance']}\n"
+            output += "\n"
+        return output
 
     def get_mesage(self):
         return self.get_error()
@@ -62,23 +64,16 @@ class JsonSchemaValidatorTool():
         self.json_schema_validator = schema
 
     def validate(self, data):
+        local_data = data
+        if isinstance(data, str):
+            local_data = json.loads(data)
 
-        try:
-            if isinstance(data, dict):
-                return validate(
-                    instance=data,
-                    schema=self.json_schema_validator)
+        validator = Draft7Validator(self.json_schema_validator)
+        errors = sorted(validator.iter_errors(local_data), key=lambda e: e.path)
+        if len(errors) > 0:
+            raise JsonSchemaValidationException(errors, local_data)
 
-            if isinstance(data, str):
-                return validate(
-                    instance=json.loads(data),
-                    schema=self.json_schema_validator)
-
-        except ValidationError as errors:
-            raise JsonSchemaValidationException(errors, data)
-
-        raise Exception(
-                "Type of data '{}' cannot be parsed".format(type(data)))
+        return True
 
     def _transform(self, data):
         doc = yaml.safe_load(data)

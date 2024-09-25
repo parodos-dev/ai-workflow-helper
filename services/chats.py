@@ -205,11 +205,10 @@ class ChatChain():
 def get_response_for_session(ctx, session_id, user_message):
     retriever = ctx.repo.retriever
     llm = ctx.ollama.llm
-    chunk_string = lambda s, n=15: (s[i:i+n] for i in range(0, len(s), n))
     # @TODO check if this clone the thing to a new object.
     history_repo = ctx.history_repo
     history_repo.set_session(f"{session_id}")
-    yield "inital one"
+    yield "Waiting on AI response\n"
     chain = ChatChain(llm, retriever, history_repo, session_id)
     ai_response = []
     result = chain.stream({"input": user_message})
