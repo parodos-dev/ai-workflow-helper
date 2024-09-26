@@ -97,27 +97,15 @@ A simple workflow wich get the latest informatin from an spaceX launch and post
 to other place:
 
 ~~~
-I need to generate the following serverelss workflow:
+First I need to check the next SpaceX launch, to obtain the data I use the following bash command:
 
-The state data will have the information of some companies stock info. like
+NEXT_LAUNCH=$(curl https://api.spacexdata.com/v5/launches/next | jq .date_utc)
 
-{"stock": ["IBM", "APPL"]}
+after this, I want to save the information in my server, so I normally POST the following inforamtion:
 
-To get the stock info, the  request will be like this:
+curl -d '{"next_launch": "'${NEXT_LAUNCH}'"}' https://httpbin.org/post
 
-https://www.alphavantage.co/query?function=OVERVIEW&symbol=IBM&apikey=demo
-
-from this data, I need to select the information like:
-
-echo '$RESULT' | jq '.52WeekHigh'
-
-You need to iterate over the stock key, and push all information by each key.
-
-From there, you need to put that information to here using the following format:
-
-curl https://acalustra.com/stocks \
-    -H "content-type: application/json" \
-    -d '[{"IBM": $HighestValue}, {"AAPL": $HighestValue}]'
+could you generate the workflow with functions and error handling?
 ~~~
 
 
