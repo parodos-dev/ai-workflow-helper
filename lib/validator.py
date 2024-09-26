@@ -1,4 +1,3 @@
-from lib.json_validator import JsonSchemaValidationException
 
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.output_parsers import JsonOutputParser

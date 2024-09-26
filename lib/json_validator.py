@@ -1,8 +1,7 @@
-from jsonschema import validate, ValidationError, Draft7Validator
+from jsonschema import ValidationError, Draft7Validator
 import requests
 import yaml
 import json
-import logging
 
 def format_error(error: ValidationError) -> dict:
     return {
