@@ -177,7 +177,7 @@ document.getElementById('messageInput').addEventListener('input', function(e) {
 
 document.getElementById('copyWorkflow').addEventListener('click', async function(e) {
     const workflow = await getJsonWorkflow();
-    copyToClipboard(JSON.stringify(workflow.document));
+    copyToClipboard(JSON.stringify(workflow.document, null, 2));
 });
 
 function copyToClipboard(text) {
