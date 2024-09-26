@@ -223,6 +223,7 @@
               pyright
               pkgs.direnv
               pkgs.kind
+              pkgs.ruff
             ];
 
           };
