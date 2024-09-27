@@ -1,0 +1,19 @@
+I need to create a workflow which checks the financial data for a list of companies and pushed to my service.
+
+The input of the workflow will be like:
+
+{"companies": ["IBM", "APPL"]}
+
+For each company, the data can be get from the following url, where symbol is the company information:
+
+curl -s "https://www.alphavantage.co/query?function=OVERVIEW&symbol=IBM&apikey=demo" | jq '."52WeekHigh"'
+
+When you iterate to all the companies the output should be:
+
+```
+[
+    {"company": "IBM", "high": $52WeekHighValue},
+    {"company": "APPL", "high": $52WeekHighValue},
+]
+```
+And this  result should be post to: "http://acalustra.com/financialData/post"

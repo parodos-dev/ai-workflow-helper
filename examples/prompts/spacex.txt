@@ -1,0 +1,9 @@
+First I need to check the next SpaceX launch, to obtain the data I use the following bash command:
+
+NEXT_LAUNCH=$(curl https://api.spacexdata.com/v5/launches/next | jq .date_utc)
+
+after this, I want to save the information in my server, so I normally POST the following inforamtion:
+
+curl -d '{"next_launch": "'${NEXT_LAUNCH}'"}' https://httpbin.org/post
+
+could you generate the workflow with functions and error handling?

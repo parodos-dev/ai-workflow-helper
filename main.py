@@ -1,31 +1,22 @@
 import click
 import logging
 import sys
-import yaml
 import requests
 import os
 
 from api.urls import urls
 from config import Config
-from const import SYSTEM_MESSAGE, SAMPLE_QUERY
-from lib.click_tooling import MultiLinePromt
+from const import  SAMPLE_QUERY
 from lib.history import HistoryRepository
 from lib.json_validator import JsonSchemaValidatorTool
 from lib.models import SerVerlessWorkflow
 from lib.ollama import Ollama
 from lib.repository import VectorRepository
 from lib.retriever import Retriever
-from lib.validator import JsonSchemaValidationException
 from lib.validator import OutputValidator
-from lib.validator import ParsedOutputException
-from services.chats import get_prompt_details
 
 
 from flask import Flask, g
-from langchain.output_parsers import PydanticOutputParser
-from langchain.prompts import ChatPromptTemplate
-from langchain_core.messages import HumanMessage
-from langchain_core.runnables import RunnablePassthrough
 
 logging.basicConfig(stream=sys.stderr, level=os.environ.get('LOG_LEVEL', 'INFO').upper())
 
@@ -100,159 +91,28 @@ def run(obj):
 
 
 @click.command()
+@click.argument('example', required=False)
 @click.pass_obj
-def sample_request(obj):
+def sample_request(obj, example):
     url = "http://localhost:5000/chat"
     headers = {
         'Content-type': 'application/json',
     }
-    data = {'input': SAMPLE_QUERY}
+    query = SAMPLE_QUERY
+    if example:
+        with open(f"examples/prompts/{example}.txt", "r") as fp:
+            query = fp.read()
+    data = {'input': query}
     response = requests.post(url, json=data, headers=headers, stream=True)
     for line in response.iter_lines():
         print(line.decode('utf-8'))
     session_id = response.headers.get('session_id')
     click.echo(f"The session_id is: {session_id}")
 
-    # url = f"http://localhost:5000/chat/{session_id}"
-    # data["input"] = (
-    #     "Could you add a kafka message at the end of the workflow"
-    #     "with the response?")
-    # response = requests.post(url, json=data, headers=headers, stream=True)
-    # for line in response.iter_lines():
-    #     print(line.decode('utf-8'))
-
-
-# @TODO move this method to the services.
-@click.command()
-@click.argument('message')
-@click.pass_obj
-def chat(obj, message):
-
-    retriever = obj.repo.retriever
-    llm = obj.ollama.llm
-    validator = obj.validator
-
-    def format_docs(docs):
-        return "\n\n".join(doc.page_content for doc in docs)
-
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", SYSTEM_MESSAGE),
-            ("human", "{input}"),
-        ]
-    )
-
-    merda = PydanticOutputParser(pydantic_object=SerVerlessWorkflow)
-    rag_chain = (
-        {
-            "context": retriever | format_docs,
-            # "workflow_schema": lambda _: Model.schema_json(),
-            "input": RunnablePassthrough(),
-            "format_instructions": validator.get_format_instructions,
-        }
-        | prompt
-        | llm
-        | merda
-        # We can use parser here, but TBH I want to have the AI response, so
-        # token usage can be tracked and chain of messages can be added.
-        # | validator
-    )
-    click.echo(f"The input query is: {SAMPLE_QUERY}")
-    messages = [[{"input": SAMPLE_QUERY}]]
-
-    def generate_reply():
-        document = ""
-        for _ in range(5):
-            AI_response = rag_chain.invoke(messages)
-            messages.append(AI_response)
-            logging.debug("Got AI response {}".format(AI_response.content))
-            try:
-                document = validator.invoke(AI_response)
-
-                if document is not None:
-                    click.echo("The AI response is:\n{}".format(
-                        yaml.dump(document, indent=4)))
-                    break
-            except (ParsedOutputException, JsonSchemaValidationException) as e:
-                messages.append(e.get_mesage())
-            except Exception as e:
-                click.echo(f"There was an uncaught execption: {e}")
-
-            click.confirm("Do you want to continue asking?")
-
-    generate_reply()
-    while True:
-        if not click.confirm("Do you want to continue asking?"):
-            break
-
-        next_prompt = MultiLinePromt.get_and_wait_prompt()
-        messages.append(HumanMessage(f"{next_prompt}"))
-        generate_reply()
-
-
-# @TODO delete this method
-@click.command()
-@click.argument('message')
-@click.pass_obj
-def extended_chat(obj, message):
-    # This function is only for testing new things and do manual tests.
-    retriever = obj.repo.retriever
-    llm = obj.ollama.llm
-    validator = obj.validator
-
-    def format_docs(docs):
-        return "\n\n".join(doc.page_content for doc in docs)
-
-    prompt = get_prompt_details()
-
-    rag_chain = (
-        {
-            "context": retriever | format_docs,
-            "input": RunnablePassthrough(),
-            "schema": lambda _: SerVerlessWorkflow.schema_json(),
-        }
-        | prompt
-        | llm
-    )
-
-    click.echo(f"The input query is: {SAMPLE_QUERY}")
-    messages = [[{"input": SAMPLE_QUERY}]]
-
-    def generate_reply():
-        document = ""
-        for _ in range(5):
-            AI_response = rag_chain.invoke(messages)
-            logging.debug("Got AI response {}".format(AI_response.content))
-            messages.append(AI_response)
-            try:
-                document = validator.invoke(AI_response)
-                if document is not None:
-                    click.echo("The AI response is:\n{}".format(
-                        yaml.dump(document, indent=4)))
-                    break
-            except (ParsedOutputException, JsonSchemaValidationException) as e:
-                click.echo("Failed to validate input json: {}".format(
-                    e.get_mesage()))
-                messages.append(e.get_mesage())
-            except Exception as e:
-                click.echo(f"There was an uncaught execption: {e}")
-            click.confirm("Do you want to continue asking?")
-
-    generate_reply()
-    while True:
-        if not click.confirm("Do you want to continue asking?"):
-            break
-
-        next_prompt = MultiLinePromt.get_and_wait_prompt()
-        messages.append(HumanMessage(f"{next_prompt}"))
-        generate_reply()
-
 
 cli.add_command(load_data)
 cli.add_command(run)
 cli.add_command(sample_request)
-cli.add_command(chat)
-cli.add_command(extended_chat)
 
 if __name__ == '__main__':
     cli()
