@@ -29,7 +29,7 @@ class Context:
 
         self.validator = OutputValidator(
             SerVerlessWorkflow,
-            JsonSchemaValidatorTool.load_schema(SerVerlessWorkflow.schema()))
+            JsonSchemaValidatorTool.load_from_file("lib/schema/serverless_workflow.json"))
 
         self.history_repo = HistoryRepository(
             session_id="empty",

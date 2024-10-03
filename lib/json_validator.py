@@ -1,14 +1,17 @@
-from jsonschema import ValidationError, Draft7Validator
+from jsonschema import ValidationError, Draft202012Validator
 import requests
 import yaml
 import json
+import jsonschema
 
 def format_error(error: ValidationError) -> dict:
+    best_match = jsonschema.exceptions.best_match(error.context)
     return {
         "path": " -> ".join(str(path) for path in error.path),
         "message": error.message,
         "schema_path": " -> ".join(str(path) for path in error.schema_path),
         "instance": error.instance,
+        "underlaying": best_match.message
     }
 
 class JsonSchemaValidationException(Exception):
@@ -30,9 +33,10 @@ class JsonSchemaValidationException(Exception):
         output = ""
         for i,x in enumerate(error_msg):
             output += f"Error {i} in path {x['path']}\n"
-            output += f"Message: {x['message']}\n"
-            output += f"schema_path: {x['schema_path']}\n"
-            output += f"instance: {x['instance']}\n"
+            output += f"\tMessage: {x['message']}\n"
+            output += f"\tSchema_path: {x['schema_path']}\n"
+            output += f"\tInstance: {x['instance']}\n"
+            output += f"\tUnderlaying error: {x['underlaying']}\n"
             output += "\n"
         return output
 
@@ -46,6 +50,14 @@ class JsonSchemaValidatorTool():
     @classmethod
     def load_schema(cls, schema):
         return cls(schema)
+
+    @classmethod
+    def load_from_file(cls, filename):
+        fp = open(filename, "r")
+        data = fp.read()
+        fp.close()
+        return cls.load_schema(json.loads(data))
+
 
     @classmethod
     def load_from_url(cls, url):
@@ -67,7 +79,7 @@ class JsonSchemaValidatorTool():
         if isinstance(data, str):
             local_data = json.loads(data)
 
-        validator = Draft7Validator(self.json_schema_validator)
+        validator = Draft202012Validator(self.json_schema_validator)
         errors = sorted(validator.iter_errors(local_data), key=lambda e: e.path)
         if len(errors) > 0:
             raise JsonSchemaValidationException(errors, local_data)
