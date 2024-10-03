@@ -1,52 +1,81 @@
+Here you have the workflow:
 
-    ```json
-    {{
-    "id": "eventbasedgreeting",
-    "version": "1.0",
-    "specVersion": "0.8",
-    "name": "Event Based Greeting Workflow",
-    "description": "Event Based Greeting",
-    "start": "Greet",
-    "events": [
-     {{
-      "name": "GreetingEvent",
-      "type": "greetingEventType",
-      "source": "greetingEventSource"
-     }}
-    ],
-    "functions": [
-      {{
-         "name": "greetingFunction",
-         "operation": "file://myapis/greetingapis.json#greeting"
-      }}
-    ],
-    "states":[
-      {{
-         "name":"Greet",
-         "type":"event",
-         "onEvents": [{{
-             "eventRefs": ["GreetingEvent"],
-             "eventDataFilter": {{
-                "data": "${{ .greet }}",
-                "toStateData": "${{ .greet }}"
-             }},
-             "actions":[
-                {{
-                   "functionRef": {{
-                      "refName": "greetingFunction",
-                      "arguments": {{
-                        "name": "${{ .greet.name }}"
-                      }}
-                   }}
-                }}
-             ]
-         }}],
-         "stateDataFilter": {{
-            "output": "${{ .payload.greeting }}"
-         }},
-         "end": true
-      }}
-    ]
-    }}
-    ```
-        
+```json
+{
+  "id": "getTemperature",
+  "name": "Get temperature by room",
+  "version": "1.0",
+  "specVersion": "0.8",
+  "start": "getAllRoomTemperature",
+  "functions": [
+    {
+      "name": "getRoomTemperature",
+      "type": "custom",
+      "operation": "rest:get:http://office-status.local/temperature/{room_name}"
+    },
+    {
+      "name": "reportInfo",
+      "type": "custom",
+      "operation": "rest:post:http://erp.local/roomTemperatures"
+    }
+  ],
+  "states": [
+    {
+      "name": "getAllRoomTemperature",
+      "type": "foreach",
+      "inputCollection": "${ .rooms }",
+      "outputCollection": "${ .results }",
+      "iterationParam": "roomName",
+      "actions": [
+        {
+          "functionRef": {
+            "refName": "getRoomTemperature",
+            "arguments": {
+              "room_name": "${ .roomName }"
+            }
+          },
+          "actionDataFilter": {
+            "results": "{room: .roomName, temperature:.temperature}"
+          }
+        }
+      ],
+      "transition": "reportInfo"
+    },
+    {
+      "name": "reportInfo",
+      "type": "operation",
+      "actions": [
+        {
+          "functionRef": {
+            "refName": "reportInfo",
+            "arguments": {
+              "rooms": "${ .results }"
+            }
+          },
+          "actionDataFilter": {
+            "toStateData": ".reportInformation"
+          }
+        }
+      ],
+      "end": true
+    }
+  ]
+}
+```
+
+Key points for this workflow:
+
+- *Functions*: Two functions are created:
+    - `getRoomTemperature` which uses your url and has an argument `room_name`
+    - `reportInfo` which POST the information to the given url.
+- *States*:
+    - `getAllRoomTemperature`:
+         - I assume that the input of rooms will be part of the object when calling the worklow, under "rooms" field. The state iterate over each entry of the array and get information using the `getRoomTemperature` function.
+         - To create a valid information for the next stage, the output is filtered and prepared in the actionDataFilter action with the roomName and the temperature.
+         - When finished, the workflow will call the `reportInfo` state.
+    - `reportInfo`:
+        - It'll use the reportInfo function, because it's already defined.
+        - It'll create an argument which will be posted with the rooms key
+        - It'll return the report information under the `.reportInformation` key
+        - Because the workflow does not have more steps, set end:true
+

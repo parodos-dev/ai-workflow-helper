@@ -1,1 +1,20 @@
-Generate a single Event State with one action that calls the "greeting" function. The event state consumes cloud events of type "greetingEventType". When an even with this type is consumed, the Event state performs a single action that calls the defined "greeting" function.
+I need to generate a workflow wich track room temperature for different rooms on my building.
+
+The workflow should have an input with multiple rooms, in json array, like:
+
+```
+{"rooms": ["kitchen", "bedroom1", "bathroom"]}
+```
+
+for each room, you need to iterate over the array and make an http request to http://office-status.local/temperature/$ROOM. When you made all request, please create a json like
+
+```
+[
+  { "room": "kitchen", "temperature": 23 },
+  { "room": "bedroom1", "temperature": 18 },
+  { "room": "bathroom", "temperature": 18 }
+]
+```
+
+This json need to be posted into http://erp.local/roomTemperatures, using a POST request and all rooms information should be in a json object, with the key .rooms
+
