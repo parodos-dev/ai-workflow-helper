@@ -175,6 +175,7 @@
             pip
             flask_sqlalchemy
             pylint
+            podman
             (langchain.overridePythonAttrs (prevAttrs: {
               name = "langchain-experimental";
               sourceRoot = "${prevAttrs.src.name}/libs/experimental";

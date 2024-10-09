@@ -5,6 +5,7 @@ from const import SYSTEM_MESSAGE, EXAMPLES, REACT_MESSAGE
 from lib.models import SerVerlessWorkflow
 from lib.json_validator import JsonSchemaValidationException
 from lib.validator import ParsedOutputException
+from lib.serverless_validation import ServerlessValidation
 
 from langchain.prompts import ChatPromptTemplate, PromptTemplate
 from langchain.schema.runnable import RunnablePassthrough
@@ -75,9 +76,14 @@ def set_json_response(chain, session_id, ai_response, validator):
 ```
 
 I'm getting the following validation errors from the jsonschema:
+
 {validation_errors}
 
-please return the serverless workflow fixed"""
+And the maven compilation log to compare:
+```
+{compilation_error}
+```
+Return the serverless workflow in json without any comments please"""
 
     prompt = PromptTemplate(
         input_variables=["json_data", "validation_errors"],
@@ -96,7 +102,10 @@ please return the serverless workflow fixed"""
             logging.error(
                 f"cannot get valid JSON document from the response: {e}")
         except (JsonSchemaValidationException) as e:
-            logging.debug("Trying to validate: {0}".format(json.dumps(e.data)))
+            workflow_json = json.dumps(e.data)
+
+            serverless_validation = ServerlessValidation(workflow_json).run()
+            logging.debug("Trying to validate: {0}".format(workflow_json))
             set_workflow(e.data, False)
             logging.error(
                     "Workflow is not correct has some JSON issues: {0}".format(
@@ -105,7 +114,8 @@ please return the serverless workflow fixed"""
                     i, e.get_number_of_errors())
             formatted_prompt = prompt.format(
                     json_data=json.dumps(e.data),
-                    validation_errors=e.get_error())
+                    validation_errors=e.get_error(),
+                    compilation_error=serverless_validation)
             ai_response = chain.react(formatted_prompt)
             logging.debug(f"react response: {ai_response}")
         except Exception as e:

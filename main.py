@@ -109,7 +109,6 @@ def sample_request(obj, example):
     session_id = response.headers.get('session_id')
     click.echo(f"The session_id is: {session_id}")
 
-
 cli.add_command(load_data)
 cli.add_command(run)
 cli.add_command(sample_request)
