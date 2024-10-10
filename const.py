@@ -67,6 +67,7 @@ class ExamplesIterator:
             raise StopIteration
 
 EXAMPLES=list(ExamplesIterator("./lib/prompts/examples/"))
+REACT_EXAMAPLES=list(ExamplesIterator("./lib/prompts/react/"))
 
 REACT_MESSAGE = '''Review and correct the given JSON workflow based on the user provided input ensuring it matches the user's requirement and handles errors appropriately.
  

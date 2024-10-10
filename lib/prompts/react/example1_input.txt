@@ -1,0 +1,193 @@
+I have the following serverless workflow specification:
+
+```json
+{
+  "id": "getTemperature",
+  "name": "Get temperature by room",
+  "version": "1.0",
+  "specVersion": "0.8",
+  "start": "getAllRoomTemperature",
+  "functions": [
+    {
+      "name": "getRoomTemperature",
+      "type": "custom",
+      "operation": "rest:get:http://office-status.local/temperature/{room_name}"
+    },
+    {
+      "name": "reportInfo",
+      "type": "custom",
+      "operation": "rest:post:http://erp.local/roomTemperatures"
+    }
+  ],
+  "states": [
+    {
+      "name": "getAllRoomTemperature",
+      "type": "foreach",
+      "inputCollection": "${ .rooms }",
+      "outputCollection": "${ .results }",
+      "iterationParam": "roomName",
+      "actions": [
+        {
+          "functionRef": {
+            "refName": "getRoomTemperature",
+            "arguments": {
+              "room_name": "${ .roomName }"
+            }
+          },
+          "actionDataFilter": {
+            "results": "{room: .roomName, temperature:.temperature}"
+          }
+        }
+      ],
+      "transition": ""
+    },
+    {
+      "name": "reportInfo",
+      "type": "operation",
+      "actions": [
+        {
+          "functionRef": {
+            "refName": "reportInfo",
+            "arguments": {
+              "rooms": "${ .results }"
+            }
+          },
+          "actionDataFilter": {
+            "toStateData": ".reportInformation"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+With the following jsonschema errors:
+
+Error 0 in path `states.0`:
+        Schema_path: properties.states.items.anyOf
+        Instance: ```{"name": "getAllRoomTemperature", "type": "foreach", "inputCollection": "${ .rooms }", "outputCollection": "${ .results }", "iterationParam": "roomName", "actions": [{"functionRef": {"refName": "getRoomTemperature", "arguments": {"room_name": "${ .roomName }"}}, "actionDataFilter": {"results": "{room: .roomName, temperature:.temperature}"}}], "transition": ""}```
+        Underlaying errors:
+        Suberrror 0 in definition: #/definitions/foreachstate
+                Failed validating 'oneOf' in 6.properties.transition.oneOf
+                Validator value: ```[{"type": "string", "description": "Name of state to transition to", "minLength": 1}, {"type": "object", "description": "Function Reference", "properties": {"nextState": {"type": "string", "description": "Name of state to transition to", "minLength": 1}, "produceEvents": {"type": "array", "description": "Array of events to be produced before the transition happens", "items": {"type": "object", "$ref": "#/definitions/produceeventdef"}, "additionalItems": false}, "compensate": {"type": "boolean", "default": false, "description": "If set to true, triggers workflow compensation when before this transition is taken. Default is false"}}, "additionalProperties": false, "required": ["nextState"]}]```
+
+Error 1 in path `states.1`:
+        Schema_path: properties.states.items.anyOf
+        Instance: ```{"name": "reportInfo", "type": "operation", "actions": [{"functionRef": {"refName": "reportInfo", "arguments": {"rooms": "${ .results }"}}, "actionDataFilter": {"toStateData": ".reportInformation"}}]}```
+        Underlaying errors:
+        Suberrror 0 in definition: #/definitions/operationstate
+                Failed validating 'oneOf' in 2.else.oneOf
+                Validator value: ```[{"required": ["name", "type", "actions", "end"]}, {"required": ["name", "type", "actions", "transition"]}]```
+
+And the following maven compilation error:
+
+```
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ----------------< org.acme:serverless-workflow-project >----------------
+[INFO] Building serverless-workflow-project 1.0.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- clean:3.3.1:clean (default-clean) @ serverless-workflow-project ---
+[INFO]
+[INFO] --- resources:3.3.1:resources (default-resources) @ serverless-workflow-project ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO]
+[INFO] --- quarkus:3.2.9.Final-redhat-00004:generate-code (default) @ serverless-workflow-project ---
+[WARNING] K_SINK variable is empty or doesn't exist. Please make sure that this service is a Knative Source or has a SinkBinding bound to it.
+[INFO]
+[INFO] --- compiler:3.11.0:compile (default-compile) @ serverless-workflow-project ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 1 source file with javac [debug release 17] to target/classes
+[INFO]
+[INFO] --- quarkus:3.2.9.Final-redhat-00004:generate-code-tests (default) @ serverless-workflow-project ---
+[WARNING] K_SINK variable is empty or doesn't exist. Please make sure that this service is a Knative Source or has a SinkBinding bound to it.
+[INFO]
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ serverless-workflow-project ---
+[INFO] skip non existing resourceDirectory /home/kogito/serverless-workflow-project/src/test/resources
+[INFO]
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ serverless-workflow-project ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO]
+[INFO] --- surefire:3.1.2:test (default-test) @ serverless-workflow-project ---
+[INFO] Tests are skipped.
+[INFO]
+[INFO] --- jar:3.3.0:jar (default-jar) @ serverless-workflow-project ---
+[INFO] Building jar: /home/kogito/serverless-workflow-project/target/serverless-workflow-project-1.0.0-SNAPSHOT.jar
+[INFO]
+[INFO] --- quarkus:3.2.9.Final-redhat-00004:build (default) @ serverless-workflow-project ---
+[WARNING] K_SINK variable is empty or doesn't exist. Please make sure that this service is a Knative Source or has a SinkBinding bound to it.
+[WARNING] [io.quarkus.resteasy.mutiny.deployment.ResteasyMutinyProcessor] The quarkus-resteasy-mutiny extension is deprecated. Switch to RESTEasy Reactive instead.
+This extension adds support for Uni and Multi to RESTEasy Classic, without using the reactive execution model, as RESTEasy Classic does not use it. To properly integrate Mutiny and RESTEasy, use RESTEasy Reactive. See https://quarkus.io/guides/getting-started-reactive for detailed instructions
+[INFO] Performed addonsConfig discovery, found: AddonsConfig{usePersistence=false, useTracing=false, useMonitoring=false, usePrometheusMonitoring=false, useCloudEvents=true, useExplainability=false, useProcessSVG=false, useEventDrivenDecisions=false, useEventDrivenRules=false}
+[ERROR] Invalid process: '/home/kogito/serverless-workflow-project/src/main/resources/workflow.sw.json'. Found error: {}
+java.lang.IllegalStateException: Process could not be validated ![Process 'Get temperature by room' [getTemperature]: Process has no end node., Process 'Get temperature by room' [getTemperature]: Node 'null' [2] ForEach has no outgoing connection, Process 'Get temperature by room' [getTemperature]: Node 'reportInfo' [7] Embedded subprocess does not have incoming connection., Process 'Get temperature by room' [getTemperature]: Node 'reportInfo' [7] Embedded subprocess does not have outgoing connection., Process 'Get temperature by room' [getTemperature]: Node 'reportInfo' [7] Has no connection to the start node.]
+    at org.jbpm.ruleflow.core.RuleFlowProcessFactory.validate (RuleFlowProcessFactory.java:236)
+    at org.kie.kogito.serverless.workflow.parser.ServerlessWorkflowParser.parseProcess (ServerlessWorkflowParser.java:173)
+    at org.kie.kogito.serverless.workflow.parser.ServerlessWorkflowParser.getProcessInfo (ServerlessWorkflowParser.java:184)
+    at org.kie.kogito.codegen.process.ProcessCodegen.parseWorkflowFile (ProcessCodegen.java:229)
+    at org.kie.kogito.codegen.process.ProcessCodegen.lambda$ofCollectedResources$1 (ProcessCodegen.java:128)
+    at java.util.stream.ReferencePipeline$7$1.accept (ReferencePipeline.java:273)
+    at java.util.stream.ReferencePipeline$3$1.accept (ReferencePipeline.java:197)
+    at java.util.ArrayList$ArrayListSpliterator.forEachRemaining (ArrayList.java:1625)
+    at java.util.stream.AbstractPipeline.copyInto (AbstractPipeline.java:509)
+    at java.util.stream.AbstractPipeline.wrapAndCopyInto (AbstractPipeline.java:499)
+    at java.util.stream.ReduceOps$ReduceOp.evaluateSequential (ReduceOps.java:921)
+    at java.util.stream.AbstractPipeline.evaluate (AbstractPipeline.java:234)
+    at java.util.stream.ReferencePipeline.collect (ReferencePipeline.java:682)
+    at org.kie.kogito.codegen.process.ProcessCodegen.ofCollectedResources (ProcessCodegen.java:141)
+    at org.kie.kogito.codegen.process.ProcessCodegenFactory.create (ProcessCodegenFactory.java:32)
+    at org.kie.kogito.codegen.core.utils.ApplicationGeneratorDiscovery.lambda$loadGenerators$0 (ApplicationGeneratorDiscovery.java:63)
+    at java.util.stream.ReferencePipeline$3$1.accept (ReferencePipeline.java:197)
+    at java.util.Iterator.forEachRemaining (Iterator.java:133)
+    at java.util.Spliterators$IteratorSpliterator.forEachRemaining (Spliterators.java:1845)
+    at java.util.stream.AbstractPipeline.copyInto (AbstractPipeline.java:509)
+    at java.util.stream.AbstractPipeline.wrapAndCopyInto (AbstractPipeline.java:499)
+    at java.util.stream.ReduceOps$ReduceOp.evaluateSequential (ReduceOps.java:921)
+    at java.util.stream.AbstractPipeline.evaluate (AbstractPipeline.java:234)
+    at java.util.stream.ReferencePipeline.collect (ReferencePipeline.java:682)
+    at org.kie.kogito.codegen.core.utils.ApplicationGeneratorDiscovery.loadGenerators (ApplicationGeneratorDiscovery.java:65)
+    at org.kie.kogito.codegen.core.utils.ApplicationGeneratorDiscovery.discover (ApplicationGeneratorDiscovery.java:51)
+    at org.kie.kogito.quarkus.common.deployment.KogitoAssetsProcessor.generateFiles (KogitoAssetsProcessor.java:262)
+    at org.kie.kogito.quarkus.common.deployment.KogitoAssetsProcessor.generateSources (KogitoAssetsProcessor.java:140)
+    at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0 (Native Method)
+    at jdk.internal.reflect.NativeMethodAccessorImpl.invoke (NativeMethodAccessorImpl.java:77)
+    at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke (DelegatingMethodAccessorImpl.java:43)
+    at java.lang.reflect.Method.invoke (Method.java:568)
+    at io.quarkus.deployment.ExtensionLoader$3.execute (ExtensionLoader.java:864)
+    at io.quarkus.builder.BuildContext.run (BuildContext.java:282)
+    at org.jboss.threads.ContextHandler$1.runWith (ContextHandler.java:18)
+    at org.jboss.threads.EnhancedQueueExecutor$Task.run (EnhancedQueueExecutor.java:2513)
+    at org.jboss.threads.EnhancedQueueExecutor$ThreadBody.run (EnhancedQueueExecutor.java:1538)
+    at java.lang.Thread.run (Thread.java:840)
+    at org.jboss.threads.JBossThread.run (JBossThread.java:501)
+[INFO] Generator discovery performed, found [processes]
+[INFO] Skipping generator 'processes' because disabled
+[WARNING] SpecVersion enum schema is not present in the OpenAPI document.
+[WARNING] [io.quarkus.config] Unrecognized configuration key "kogito.data-index.blocking" was provided; it will be ignored; verify that the dependency extension for this configuration is set or that you did not make a typo
+[WARNING] [io.quarkus.config] Unrecognized configuration key "quarkus.kafka.devservices.enabled" was provided; it will be ignored; verify that the dependency extension for this configuration is set or that you did not make a typo
+[WARNING] [io.quarkus.config] Unrecognized configuration key "kogito.apps.persistence.type" was provided; it will be ignored; verify that the dependency extension for this configuration is set or that you did not make a typo
+[WARNING] [io.quarkus.config] Unrecognized configuration key "kogito.jobs-service.url" was provided; it will be ignored; verify that the dependency extension for this configuration is set or that you did not make a typo
+[WARNING] [io.quarkus.config] Unrecognized configuration key "kogito.data-index.domain-indexing" was provided; it will be ignored; verify that the dependency extension for this configuration is set or that you did not make a typo
+[WARNING] [io.quarkus.config] Unrecognized configuration key "kogito.data-index.health-enabled" was provided; it will be ignored; verify that the dependency extension for this configuration is set or that you did not make a typo
+[INFO] [io.quarkus.deployment.QuarkusAugmentor] Quarkus augmentation completed in 6507ms
+[INFO]
+[INFO] --- failsafe:3.1.2:integration-test (default) @ serverless-workflow-project ---
+[INFO] Tests are skipped.
+[INFO]
+[INFO] --- failsafe:3.1.2:verify (default) @ serverless-workflow-project ---
+[INFO] Tests are skipped.
+[INFO]
+[INFO] --- install:3.1.1:install (default-install) @ serverless-workflow-project ---
+[INFO] Installing /home/kogito/serverless-workflow-project/pom.xml to /home/kogito/.m2/repository/org/acme/serverless-workflow-project/1.0.0-SNAPSHOT/serverless-workflow-project-1.0.0-SNAPSHOT.pom
+[INFO] Installing /home/kogito/serverless-workflow-project/target/serverless-workflow-project-1.0.0-SNAPSHOT.jar to /home/kogito/.m2/repository/org/acme/serverless-workflow-project/1.0.0-SNAPSHOT/serverless-workflow-project-1.0.0-SNAPSHOT.jar
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  15.003 s
+[INFO] Finished at: 2024-10-10T13:42:24Z
+[INFO] ------------------------------------------------------------------------
+```
+
