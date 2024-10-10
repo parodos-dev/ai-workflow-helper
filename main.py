@@ -8,12 +8,13 @@ from api.urls import urls
 from config import Config
 from const import  SAMPLE_QUERY
 from lib.history import HistoryRepository
-from lib.json_validator import JsonSchemaValidatorTool
+from lib.json_validator import JsonSchemaValidatorTool, JsonSchemaValidationException
 from lib.models import SerVerlessWorkflow
 from lib.ollama import Ollama
 from lib.repository import VectorRepository
 from lib.retriever import Retriever
 from lib.validator import OutputValidator
+from lib.serverless_validation import ServerlessValidation
 
 
 from flask import Flask, g
@@ -26,10 +27,9 @@ class Context:
         self.config = config
         self.ollama = Ollama(self.config.base_url, self.config.model)
         self.repo = VectorRepository(self.config.db, self.ollama.embeddings)
-
         self.validator = OutputValidator(
             SerVerlessWorkflow,
-            JsonSchemaValidatorTool.load_from_file("lib/schema/serverless_workflow.json"))
+            JsonSchemaValidatorTool.load_from_file("lib/schema/workflow.json"))
 
         self.history_repo = HistoryRepository(
             session_id="empty",
@@ -109,9 +109,31 @@ def sample_request(obj, example):
     session_id = response.headers.get('session_id')
     click.echo(f"The session_id is: {session_id}")
 
+@click.command()
+@click.argument('file-path', required=True)
+@click.pass_obj
+def validate_json(obj, file_path):
+    print('merda')
+    click.echo("merda")
+    fp = open(file_path, "r")
+    workflow = fp.read()
+    fp.close()
+    click.echo("JSONschema validation:")
+    try:
+        obj.validator.invoke(workflow)
+    except JsonSchemaValidationException as e:
+        click.echo(e.get_error())
+
+    click.echo("Maven compilation validation:")
+    serverless_validation = ServerlessValidation(workflow).run()
+    click.echo(serverless_validation)
+
+
 cli.add_command(load_data)
 cli.add_command(run)
 cli.add_command(sample_request)
+cli.add_command(validate_json)
+
 
 if __name__ == '__main__':
     cli()

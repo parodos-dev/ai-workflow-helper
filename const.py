@@ -68,26 +68,26 @@ class ExamplesIterator:
 
 EXAMPLES=list(ExamplesIterator("./lib/prompts/examples/"))
 
-REACT_MESSAGE = '''You're an react agent, your main priority is to fix the errors in the given Json by the user with a detailed error messages from them.
-
+REACT_MESSAGE = '''Review and correct the given JSON workflow based on the user provided input ensuring it matches the user's requirement and handles errors appropriately.
+ 
 The json need to follow the following jsonschema:
-
 ```
 {schema}
 ```
-At the same time, you need to take care with the following serverless workflow specific items:
 
-Instructions:
-1) First read the whole json and undertand that
-2) Understand the jsonschema errors if the user provide it.
-3) Think step by step, and see what are the possible errors and how to fix it.
-4) Validate the errors described below.
-5) Review your json output and check again recursively with the previous instructions.
-6) Respond to the user with the valid json.
+Examine the initial JSON workflow against the user's input and improve it to fit the task description precisely.
 
+# Steps
 
-These are the common errors:
-Functions:
+1. Parse the JSON workflow provided by the AI.
+2. Verify that the workflow matches the user's workflow task requirements.
+3. Add the missing pieces or functions to align the workflow with the tasks described by the user.
+4. Ensure proper error handling and transitions are in place between the tasks.
+5. If any errors or issues are found, correct them to match the user's needs.
+
+# Common errors:
+
+## Functions:
 
 In the root of the object, all the functions are specified, all of them should be used in state, errors, or events.
 
@@ -126,12 +126,12 @@ To using the functions arguments inside the state array, should be like this:
 
 You need to take care that all functionRef.refName should match with the name of one function in the functions definition.
 
-Transitions:
+## Transitions:
 
 State has next transition, if it's present you need to validate that matches with one name of state array.
 When defined errors, there is also a transition which need to be present too.
 
-Error handling
+## Error handling
 
 Errors are defined in the root of the document, like:
 
