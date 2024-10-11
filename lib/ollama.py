@@ -1,4 +1,4 @@
-# from langchain_community.chat_models import ChatOllama
+from langchain_community.chat_models import ChatOllama
 # from langchain_experimental.llms.ollama_functions import OllamaFunctions
 # from langchain_openai import OpenAIEmbeddings
 
@@ -20,12 +20,19 @@ class Ollama():
         # On the other hand, the OpenAI has better support for multiple actions
         # in langchain, let's take advantage of it
         if not self._ollama:
-            self._ollama = ChatOpenAI(
-                base_url=self.base_url + "/v1",
-                api_key="no-need",
+            #import ipdb; ipdb.set_trace()
+            self._ollama = ChatOllama(
+                base_url=self.base_url,
                 model=self.model,
-                temperature=0
+                temperature=0,
+                num_ctx=20000,
             )
+            # self._ollama = ChatOpenAI(
+            #     base_url=self.base_url + "/v1",
+            #     api_key="no-need",
+            #     model=self.model,
+            #     temperature=0
+            # )
             # self._ollama = OllamaFunctions(
             #     base_url=self.base_url,
             #     model=self.model,
