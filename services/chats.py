@@ -91,15 +91,7 @@ def get_history(ctx, session_id):
     ctx.history_repo.set_session(session_id)
     return ctx.history_repo.messages
 
-
-# This function iterates over the json and try to fix it.
-def set_json_response(chain, session_id, ai_response, validator):
-
-
-    def set_workflow(doc, valid):
-        WORKFLOWS.put(
-            str(session_id),
-            { "document": doc, "valid": valid})
+class ValidatingJsonWorkflow():
 
     template = """
 Please analyze and fix the following JSON workflow definition according to the provided JSON schema, JSON Schema compilation errors, and Maven compilation log:
@@ -128,49 +120,67 @@ Please perform the following tasks:
 Explain your reasoning for each suggested fix and any changes made to the JSON. If there are conflicting errors or fixes, prioritize them and explain your decision-making process.
 """
 
-    prompt = PromptTemplate(
-        input_variables=["json_data", "validation_errors"],
-        template=template
-    )
-    yield "Validation started\n\n"
-    for i in range(5):
-        try:
-            document = validator.invoke(ai_response)
-            if document is None:
-                logging.error("document is null")
+    def _prompt(self):
+        return  PromptTemplate(
+            input_variables=["json_data", "validation_errors", "compilation_error"],
+            template=self.template
+        )
+
+    def _set_workflow(self, doc, valid):
+        WORKFLOWS.put(
+            str(self.session_id),
+            { "document": doc, "valid": valid})
+
+    def __init__(self, chain, session_id, ai_response, validator):
+        self.chain = chain
+        self.session_id = session_id
+        self.ai_response = ai_response
+        self.validator = validator
+        return
+
+    def _ask_for_fixing(self, workflow, jsonschema, compilation_error):
+        formatted_prompt = self._prompt().format(
+                json_data=workflow,
+                validation_errors=jsonschema,
+                compilation_error=compilation_error)
+        self.ai_response = self.chain.react(formatted_prompt)
+
+    def validate_compilation(self, workflow):
+        return ServerlessValidation(workflow).run()
+
+    def validate(self, tries):
+        yield "Validation started\n\n"
+        for i in range(tries):
+            yield f"<b>Parsing output stage {i} of {tries}:</b>"
+            try:
+                document = self.validator.invoke(self.ai_response)
+                if document is None:
+                    logging.error("document is null")
+                    return
+                workflow_json = json.dumps(document, indent=2)
+                compilation_error, valid = self.validate_compilation(workflow_json)
+                if not valid:
+                    self._ask_for_fixing(workflow_json, "", compilation_error)
+                    continue
+                logging.error("Finally the document is correct")
+                self._set_workflow(document, True)
                 return
-            logging.error("Finally the document is correct")
-            set_workflow(document, True)
-            return
-        except (ParsedOutputException) as e:
-            yield "<b>Parsing output stage {0} of 5, with Parsed error</b>\n\n"
-            logging.error(
-                f"cannot get valid JSON document from the response: {e}")
-        except (JsonSchemaValidationException) as e:
-            set_workflow(e.data, False)
-            workflow_json = json.dumps(e.data, indent=2)
-            serverless_validation, valid = ServerlessValidation(workflow_json).run()
-            logging.debug("Trying to validate: {0}".format(workflow_json))
-            logging.error(
-                    "Workflow is not correct has some JSON issues: {0}".format(
-                        e.get_error()))
-            yield "<b>Parsing output stage {0} of 5, with {1} errors</b>\n\n".format(
-                    i, e.get_number_of_errors())
-            formatted_prompt = prompt.format(
-                    json_data=workflow_json,
-                    validation_errors=e.get_error(),
-                    compilation_error=serverless_validation,
-                    schema=SerVerlessWorkflow.schema_json())
-            ai_response = chain.react(formatted_prompt)
-            logging.debug(f"react response: {ai_response}")
-        except Exception as e:
-            yield "<b>Parsing output stage {0} of 5, with unexpected error</b>\n\n"
-            logging.error(f"Latest response: {ai_response.content}")
-            logging.error(f"Unexected exception on the workflow: {e}")
+            except (ParsedOutputException) as e:
+                yield "Parsed error\n\n"
+                logging.error(
+                    f"cannot get valid JSON document from the response: {e}")
+            except (JsonSchemaValidationException) as e:
+                self._set_workflow(e.data, False)
+                workflow_json = json.dumps(e.data, indent=2)
+                compilation_error, valid = self.validate_compilation(workflow_json)
+                yield "Jsonschema validation failed with {0} errors\n\n".format(e.get_number_of_errors())
+                self._ask_for_fixing(workflow_json, e.get_error(), compilation_error)
+            except Exception as e:
+                yield "failed with unexpected error\n\n"
+                logging.error(f"Latest response: {self.ai_response.content}")
+                logging.error(f"Unexected exception on the workflow: {e}")
+        return
 
-
-
-    yield "Validation finished"
 
 class ChatChain():
     def get_prompt_details(cls):
@@ -297,5 +307,8 @@ def get_response_for_session(ctx, session_id, user_message):
 
     yield "\nChecking if json is correct and validation\n\n"
     full_ai_response = "".join(ai_response)
-    for x in set_json_response(chain, session_id, full_ai_response, ctx.validator):
+    validator = ValidatingJsonWorkflow(chain, session_id, full_ai_response, ctx.validator)
+    for x in validator.validate(10):
         yield str(x)
+    # for x in set_json_response(chain, session_id, full_ai_response, ctx.validator):
+    #     yield str(x)
