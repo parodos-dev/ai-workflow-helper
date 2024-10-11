@@ -67,11 +67,11 @@ class ExamplesIterator:
             raise StopIteration
 
 EXAMPLES=list(ExamplesIterator("./lib/prompts/examples/"))
-REACT_EXAMAPLES=list(ExamplesIterator("./lib/prompts/react/"))
+REACT_EXAMPLES=list(ExamplesIterator("./lib/prompts/react/"))
 
 REACT_MESSAGE = '''Review and correct the given JSON workflow based on the user provided input ensuring it matches the user's requirement and handles errors appropriately.
  
-The json need to follow the following jsonschema:
+The result json should adheres to the following schema:
 ```
 {schema}
 ```
@@ -85,6 +85,12 @@ Examine the initial JSON workflow against the user's input and improve it to fit
 3. Add the missing pieces or functions to align the workflow with the tasks described by the user.
 4. Ensure proper error handling and transitions are in place between the tasks.
 5. If any errors or issues are found, correct them to match the user's needs.
+
+# Rules
+
+- If the user adds the maven compilation log, please keep iteraten in the user workflow json which is given by him.
+- You need to work only with serverless workflow.
+- Do not use any knowledge from your k
 
 # Common errors:
 

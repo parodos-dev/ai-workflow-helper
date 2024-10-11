@@ -2,7 +2,7 @@ import uuid
 
 from flask import jsonify, g, Response, request
 from services.chats import get_response_for_session, get_history
-from services.chats import get_workflow_for_session
+from services.chats import get_workflow_for_session, get_all_workflow_for_session
 
 
 def list_chats():
@@ -28,6 +28,10 @@ def get_chat(session_id):
 
 def get_workflow(session_id):
     content = get_workflow_for_session(g.ctx, session_id)
+    return content
+
+def get_all_workflow(session_id):
+    content = get_all_workflow_for_session(g.ctx, session_id)
     return content
 
 
