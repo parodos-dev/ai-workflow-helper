@@ -149,7 +149,7 @@ Explain your reasoning for each suggested fix and any changes made to the JSON. 
         except (JsonSchemaValidationException) as e:
             set_workflow(e.data, False)
             workflow_json = json.dumps(e.data, indent=2)
-            serverless_validation = ServerlessValidation(workflow_json).run()
+            serverless_validation, valid = ServerlessValidation(workflow_json).run()
             logging.debug("Trying to validate: {0}".format(workflow_json))
             logging.error(
                     "Workflow is not correct has some JSON issues: {0}".format(

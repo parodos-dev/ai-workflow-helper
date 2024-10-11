@@ -40,4 +40,5 @@ class ServerlessValidation(object):
                 },
             ]
         )
-        return container.decode()
+        result = container.decode()
+        return (result, "[ERROR]" not in result)

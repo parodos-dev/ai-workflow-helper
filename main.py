@@ -113,8 +113,6 @@ def sample_request(obj, example):
 @click.argument('file-path', required=True)
 @click.pass_obj
 def validate_json(obj, file_path):
-    print('merda')
-    click.echo("merda")
     fp = open(file_path, "r")
     workflow = fp.read()
     fp.close()
@@ -125,8 +123,9 @@ def validate_json(obj, file_path):
         click.echo(e.get_error())
 
     click.echo("Maven compilation validation:")
-    serverless_validation = ServerlessValidation(workflow).run()
+    serverless_validation, valid = ServerlessValidation(workflow).run()
     click.echo(serverless_validation)
+    click.echo(f"The workflow can compile, result: {valid}")
 
 
 cli.add_command(load_data)
