@@ -1,7 +1,7 @@
 import logging
 import json
 
-from const import SYSTEM_MESSAGE, EXAMPLES, REACT_MESSAGE, REACT_EXAMPLES
+from const import SYSTEM_MESSAGE, EXAMPLES, REACT_EXAMPLES
 from lib.models import SerVerlessWorkflow
 from lib.json_validator import JsonSchemaValidationException
 from lib.validator import ParsedOutputException
@@ -164,7 +164,7 @@ If the JSON cannot be fully corrected due to missing information or irresolvable
             except (ParsedOutputException) as e:
                 yield "Parsed error\n\n"
                 logging.error(
-                    f"cannot get valid JSON document from the response: {self.ai_response.content}")
+                        f"cannot get valid JSON document from the response: {self.ai_response.content} {e}")
             except (JsonSchemaValidationException) as e:
                 self._set_workflow(e.data, False)
                 workflow_json = json.dumps(e.data, indent=2)
@@ -296,7 +296,6 @@ def get_response_for_session(ctx, session_id, user_message):
     chain = ChatChain(llm, retriever, history_repo, session_id)
     ai_response = []
     result = chain.stream({"input": user_message})
-
     for x in result:
         ai_response.append(x.content)
         yield str(x.content)

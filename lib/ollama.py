@@ -20,7 +20,6 @@ class Ollama():
         # On the other hand, the OpenAI has better support for multiple actions
         # in langchain, let's take advantage of it
         if not self._ollama:
-            #import ipdb; ipdb.set_trace()
             self._ollama = ChatOllama(
                 base_url=self.base_url,
                 model=self.model,

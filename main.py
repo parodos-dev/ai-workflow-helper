@@ -21,12 +21,16 @@ from flask import Flask, g
 
 logging.basicConfig(stream=sys.stderr, level=os.environ.get('LOG_LEVEL', 'INFO').upper())
 
+MODELS_EMBEDDINGS = {
+    "llama3.2:3b": 3072
+}
 
 class Context:
     def __init__(self, config):
         self.config = config
         self.ollama = Ollama(self.config.base_url, self.config.model)
-        self.repo = VectorRepository(self.config.db, self.ollama.embeddings)
+
+        self.repo = VectorRepository(self.config.db, self.ollama.embeddings, embeddings_len=MODELS_EMBEDDINGS.get(self.config.model, 4096))
         self.validator = OutputValidator(
             SerVerlessWorkflow,
             JsonSchemaValidatorTool.load_from_file("lib/schema/workflow.json"))

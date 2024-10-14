@@ -8,10 +8,11 @@ from langchain_community.docstore.in_memory import InMemoryDocstore
 
 class VectorRepository:
 
-    def __init__(self, path, embeddings, index_name="faissIndex"):
+    def __init__(self, path, embeddings, index_name="faissIndex", embeddings_len=4096):
         self._index_name = index_name
         self.path = path
         self.embeddings = embeddings
+        self.embeddings_len = embeddings_len
 
         self._initialize()
 
@@ -20,12 +21,14 @@ class VectorRepository:
         # https://github.com/langchain-ai/langchain/blob/379803751e5ae40a2aadcb4072dbb2525187dd1f/libs/community/langchain_community/vectorstores/faiss.py#L871 # noqa E501
         # @TODO The 4096 is the shape size of the embeddings, currently
         # hardcoded, but maybe we can get from OllamaEmbeddings class?
+        #index = IndexFlatL2(len(self.embeddings.embed_query("hello world")))
+
+        index = IndexFlatL2(self.embeddings_len)
         self.faiss = FAISS(
             embedding_function=self.embeddings,
-            index=IndexFlatL2(4096),
-            docstore=InMemoryDocstore(),
-            normalize_L2=False,
-            index_to_docstore_id={},
+            index=index,
+            docstore= InMemoryDocstore(),
+            index_to_docstore_id={}
         )
 
         if not os.path.isfile(os.path.join(self.path, "index.faiss")):
