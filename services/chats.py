@@ -94,30 +94,24 @@ def get_history(ctx, session_id):
 class ValidatingJsonWorkflow():
 
     template = """
-Please analyze and fix the following JSON workflow definition according to the provided JSON schema, JSON Schema compilation errors, and Maven compilation log:
+Please analyze and fix the following JSON workflow definition based on the provided information. Return only the corrected JSON as your response.
 
-Workflow JSON:
-```json
+--- JSON DATA ---
 {json_data}
-```
 
-JSON Schema Compilation Errors:
-```
-{validation_errors}```
+--- JSON SCHEMA COMPILATION ERRORS ---
+{validation_errors}
 
-Maven Compilation Log:
-```
+--- MAVEN COMPILATION LOG ---
 {compilation_error}
-```
 
-Please perform the following tasks:
-1. Review the JSON Schema compilation errors and explain their implications.
-2. Validate the JSON against the schema and list any additional validation errors not captured in the compilation errors.
-3. Analyze the Maven compilation log and list only the errors.
-4. Suggest fixes for all identified errors (JSON Schema compilation errors, validation errors, and Maven errors).
-5. Apply the suggested fixes and provide the corrected JSON workflow definition.
+Instructions:
+1. Review all provided information (JSON data, schema compilation errors, and Maven log).
+2. Identify and fix all errors in the JSON workflow definition.
+3. If there are conflicting fixes, prioritize in this order: schema compilation errors, JSON validation errors, Maven errors.
+4. Return only the corrected JSON workflow definition as your response, with no additional explanation.
 
-Explain your reasoning for each suggested fix and any changes made to the JSON. If there are conflicting errors or fixes, prioritize them and explain your decision-making process.
+If the JSON cannot be fully corrected due to missing information or irresolvable conflicts, return the original workflow json.
 """
 
     def _prompt(self):
@@ -157,18 +151,20 @@ Explain your reasoning for each suggested fix and any changes made to the JSON. 
                 if document is None:
                     logging.error("document is null")
                     return
+                self._set_workflow(document, True)
                 workflow_json = json.dumps(document, indent=2)
                 compilation_error, valid = self.validate_compilation(workflow_json)
                 if not valid:
+                    logging.error("Workflow json is correct, but cannot compile")
                     self._ask_for_fixing(workflow_json, "", compilation_error)
                     continue
                 logging.error("Finally the document is correct")
-                self._set_workflow(document, True)
+
                 return
             except (ParsedOutputException) as e:
                 yield "Parsed error\n\n"
                 logging.error(
-                    f"cannot get valid JSON document from the response: {e}")
+                    f"cannot get valid JSON document from the response: {self.ai_response.content}")
             except (JsonSchemaValidationException) as e:
                 self._set_workflow(e.data, False)
                 workflow_json = json.dumps(e.data, indent=2)

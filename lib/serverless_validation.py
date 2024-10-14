@@ -1,7 +1,9 @@
 import podman
+from podman.errors.exceptions import ContainerError
 import logging
 import uuid
 import os
+
 
 serverless_image = "registry.redhat.io/openshift-serverless-1-tech-preview/logic-swf-devmode-rhel8:1.32.0"
 
@@ -25,20 +27,23 @@ class ServerlessValidation(object):
 
 
     def run(self):
-        container = self.client.containers.run(
-            image=serverless_image,
-            detach=False,
-            remove=True,
-            command="/home/kogito/launch/build-app.sh",
-            mounts= [
-                {
-                    "type": "bind",
-                    "source": self.temp_file,
-                    "target": "/home/kogito/serverless-workflow-project/src/main/resources",
-                    "read_only": False,
-                    "relabel": "Z"
-                },
-            ]
-        )
-        result = container.decode()
-        return (result, "[ERROR]" not in result)
+        try:
+            container = self.client.containers.run(
+                image=serverless_image,
+                detach=False,
+                remove=False,
+                command="/home/kogito/launch/build-app.sh",
+                mounts= [
+                    {
+                        "type": "bind",
+                        "source": self.temp_file,
+                        "target": "/home/kogito/serverless-workflow-project/src/main/resources",
+                        "read_only": False,
+                        "relabel": "Z"
+                    },
+                ]
+            )
+            result = container.decode()
+            return (result, "[ERROR]" not in result)
+        except ContainerError as e:
+            return (e.stderr, False)
