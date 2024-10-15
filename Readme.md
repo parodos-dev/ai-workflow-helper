@@ -26,6 +26,12 @@ source env/bin/activate
 pip install -r req.txt
 ```
 
+Or using Nix:
+
+```
+nix develop
+```
+
 ## Development:
 
 Run the server
