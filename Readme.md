@@ -14,9 +14,37 @@ The POC employs the following components:
 -  Ollama for serving Language Model (LLM) models
 -  FAISSDB for storing embeddings required by Retrieval-Augmented Generation
    (RAG)
--  Python terminal application using Click framework
+-  Python terminal application using Click framework for some commands
 -  API for interact with chats.
 -  Small web-app to interact with the system
+
+# Installation:
+
+```bash
+python -m venv env
+source env/bin/activate
+pip install -r req.txt
+```
+
+## Development:
+
+Run the server
+
+```
+python main.py run
+```
+
+
+Sample request:
+```
+python main.py sample-request spacex
+```
+
+Checks:
+
+```
+ruff check
+```
 
 # Commands
 
@@ -69,7 +97,54 @@ iterate over it.
 ## Few shot prompting
 
 This application uses the few prompting examples technique to create accurate
-workflows
+workflows, you can see the examples in the following path:
+
+```
+./Lib/prompts/examples
+```
+
+The idea is to provide the LLM some way to "reasonate" and follow some
+instructions just to understand what is a workflow and how to structure it.
+
+## React Agent
+
+Generating code is hard to get it right when there is not a complete dataset of
+examples and the model correct, so this app just try to "fix" by itself using a
+ReAct model.
+
+Each time that user request something, underneed will happen the following:
+
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Ollama
+    participant FAISSDB
+
+    User->>System: POST /chat
+    System->>Ollama: Request to generate the workflow
+    Ollama-->>System: Return the answer with generate workflow
+    System-->>User: return initial workflow and text
+    loop Validate until correct or 10 attempts
+        System-->>System: Validate Jsonschema
+        System-->>System: Compile workflow
+        System-->>User: send validation steps
+    end
+```
+
+And the the same time, the ReAct agent has some few-shot examples in the
+following path:
+
+```
+./lib/prompts/react/
+```
+
+And in the following path, you can see the example input that we send to LLM
+for fixing it:
+
+```
+cat lib/prompts/react/example1_input.txt
+```
 
 ## FAQ
 
@@ -82,9 +157,7 @@ functions][https://huggingface.co/ibm-granite/granite-20b-functioncalling]
 
 ## Roadmap & nice features
 
-- Be able to ask for a workflow with openapi specs from internet and generate
-  the workflow, but functions are not enabled.
-- Creating diagrams directly from the workflows.
+- Be able to create a reactive agent based on another model.
 
 
 ## Sample prompts for the app:
@@ -108,7 +181,11 @@ curl -d '{"next_launch": "'${NEXT_LAUNCH}'"}' https://httpbin.org/post
 could you generate the workflow with functions and error handling?
 ~~~
 
+can be tested in local with:
 
+```python
+python main.py sample-request spacex
+```
 
 ## Financial data
 
@@ -135,3 +212,8 @@ When you iterate to all the companies the output should be:
 ```
 And this  result should be post to: "http://acalustra.com/financialData/post"
 ~~~
+
+can be tested in local with:
+```python
+python main.py sample-request finance
+```
