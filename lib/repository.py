@@ -13,8 +13,8 @@ class VectorRepository:
         self.path = path
         self.embeddings = embeddings
         self.embeddings_len = embeddings_len
+        self.initialized = False
 
-        self._initialize()
 
     def _initialize(self):
         # Same initialization as here:
@@ -39,6 +39,7 @@ class VectorRepository:
                 folder_path=self.path,
                 embeddings=self.embeddings,
                 allow_dangerous_deserialization=True)
+        self.initialized = True
 
     def save(self):
         # This get the current InMemoryDocstore and save into the disk
@@ -57,4 +58,6 @@ class VectorRepository:
 
     @property
     def retriever(self):
+        if not self.initialized:
+            self._initialize()
         return self._vector_store.as_retriever()

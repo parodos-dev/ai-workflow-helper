@@ -7,7 +7,11 @@ import json
 def format_error(error: ValidationError) -> dict:
 
     underlaying = []
-    state_type = error.instance.get("type")
+
+    state_type = ""
+    if isinstance(error.instance, dict):
+        state_type = error.instance.get("type")
+
     definition = f"#/definitions/{state_type}state"
     validator_schema = error.schema
 
