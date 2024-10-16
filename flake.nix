@@ -225,6 +225,7 @@
               pkgs.direnv
               pkgs.kind
               pkgs.ruff
+              pkgs.maven
             ];
 
           };

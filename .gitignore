@@ -3,3 +3,4 @@ __pycache__
 db_*
 .envrc
 sample-project
+kogito_validator/target
