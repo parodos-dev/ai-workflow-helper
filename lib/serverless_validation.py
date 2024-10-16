@@ -4,8 +4,7 @@ import logging
 import uuid
 import os
 
-
-serverless_image = "registry.redhat.io/openshift-serverless-1-tech-preview/logic-swf-devmode-rhel8:1.32.0"
+serverless_image = "quay.io/parodos-dev/kogito-validator"
 
 class ServerlessValidation(object):
 
@@ -21,10 +20,13 @@ class ServerlessValidation(object):
         self.client.images.pull(serverless_image)
         self._create_sample_workflow()
 
-    def _create_sample_workflow(self):
-        with open(f"{self.temp_file}/workflow.sw.json", "w") as fp:
-            fp.write(self.workflow)
+    @property
+    def workflow_path(self):
+        return f"{self.temp_file}/workflow.sw.json"
 
+    def _create_sample_workflow(self):
+        with open(self.workflow_path, "w") as fp:
+            fp.write(self.workflow)
 
     def run(self):
         try:
@@ -32,12 +34,11 @@ class ServerlessValidation(object):
                 image=serverless_image,
                 detach=False,
                 remove=False,
-                command="/home/kogito/launch/build-app.sh",
                 mounts= [
                     {
                         "type": "bind",
-                        "source": self.temp_file,
-                        "target": "/home/kogito/serverless-workflow-project/src/main/resources",
+                        "source": self.workflow_path,
+                        "target": "/workflow.sw.json",
                         "read_only": False,
                         "relabel": "Z"
                     },
@@ -46,4 +47,4 @@ class ServerlessValidation(object):
             result = container.decode()
             return (result, "[ERROR]" not in result)
         except ContainerError as e:
-            return (e.stderr, False)
+            return (b"".join(e.stderr).decode(), False)

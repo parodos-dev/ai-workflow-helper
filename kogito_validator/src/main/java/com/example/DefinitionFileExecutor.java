@@ -23,7 +23,8 @@ public class DefinitionFileExecutor {
             application.process(workflow);
             System.out.println("Workflow execution result is correct");
         } catch (Exception e) {
-            System.err.println("Workflow is not valid: " + e.getMessage());
+            System.err.println("[ERROR] Workflow is not valid: " + e.getMessage());
+            System.exit(1);
         }
     }
 }
