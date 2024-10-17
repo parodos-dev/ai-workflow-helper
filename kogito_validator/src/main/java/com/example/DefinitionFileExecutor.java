@@ -11,6 +11,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class DefinitionFileExecutor {
 
@@ -19,19 +21,25 @@ public class DefinitionFileExecutor {
 
         try (Reader reader = new FileReader(args[0]);
              StaticWorkflowApplication application = StaticWorkflowApplication.create()) {
-            Workflow workflow = ServerlessWorkflowUtils.getWorkflow(reader, WorkflowFormat.JSON);
-            application.process(workflow);
+             Workflow workflow = ServerlessWorkflowUtils.getWorkflow(reader, WorkflowFormat.JSON);
+             application.process(workflow);
 
             JsonNodeModel result = application.execute(workflow, Collections.emptyMap());
             System.out.printf("Execution information: %s\n", result);
 
-            System.out.printf("Execution information: %s\n", workflow.getFunctions());
-            System.out.println("Workflow execution result is correct");
+            List<String> registeredStates = workflow.getStates().stream()
+                                        .map(p -> p.getName())
+                                        .collect(Collectors.toList());
+
+            List<String> registeredFunctions = workflow.getFunctions().getFunctionDefs().stream()
+                                        .map(p -> p.getName())
+                                        .collect(Collectors.toList());
 
             System.out.println("Registered functions:");
-            workflow.getFunctions().getFunctionDefs().stream().forEach((p)-> {
-                System.out.printf("\t - %s \n", p.getName());
-            });
+            System.out.println(registeredFunctions);
+
+            System.out.println("Registered states:");
+            System.out.println(registeredStates);
 
         } catch (Exception e) {
             System.err.println("[ERROR] Workflow is not valid: " + e.getMessage());
