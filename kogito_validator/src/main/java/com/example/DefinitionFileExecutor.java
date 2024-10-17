@@ -21,7 +21,18 @@ public class DefinitionFileExecutor {
              StaticWorkflowApplication application = StaticWorkflowApplication.create()) {
             Workflow workflow = ServerlessWorkflowUtils.getWorkflow(reader, WorkflowFormat.JSON);
             application.process(workflow);
+
+            JsonNodeModel result = application.execute(workflow, Collections.emptyMap());
+            System.out.printf("Execution information: %s\n", result);
+
+            System.out.printf("Execution information: %s\n", workflow.getFunctions());
             System.out.println("Workflow execution result is correct");
+
+            System.out.println("Registered functions:");
+            workflow.getFunctions().getFunctionDefs().stream().forEach((p)-> {
+                System.out.printf("\t - %s \n", p.getName());
+            });
+
         } catch (Exception e) {
             System.err.println("[ERROR] Workflow is not valid: " + e.getMessage());
             System.exit(1);
