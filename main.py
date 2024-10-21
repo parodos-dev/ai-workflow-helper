@@ -22,7 +22,8 @@ from flask import Flask, g
 logging.basicConfig(stream=sys.stderr, level=os.environ.get('LOG_LEVEL', 'INFO').upper())
 
 MODELS_EMBEDDINGS = {
-    "llama3.2:3b": 3072
+    "llama3.2:3b": 3072,
+    "granite3-moe:1b": 1024
 }
 
 class Context:
@@ -128,7 +129,7 @@ def validate_json(obj, file_path):
 
     click.echo("Maven compilation validation:")
     serverless_validation, valid = ServerlessValidation(workflow).run()
-    click.echo(serverless_validation)
+    click.echo(f"{serverless_validation}")
     click.echo(f"The workflow can compile, result: {valid}")
 
 
