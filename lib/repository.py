@@ -19,9 +19,6 @@ class VectorRepository:
     def _initialize(self):
         # Same initialization as here:
         # https://github.com/langchain-ai/langchain/blob/379803751e5ae40a2aadcb4072dbb2525187dd1f/libs/community/langchain_community/vectorstores/faiss.py#L871 # noqa E501
-        # @TODO The 4096 is the shape size of the embeddings, currently
-        # hardcoded, but maybe we can get from OllamaEmbeddings class?
-        #index = IndexFlatL2(len(self.embeddings.embed_query("hello world")))
 
         index = IndexFlatL2(self.embeddings_len)
         self.faiss = FAISS(

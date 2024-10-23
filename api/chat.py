@@ -1,9 +1,8 @@
 import uuid
+import logging
 
 from flask import jsonify, g, Response, request
-from services.chats import get_response_for_session, get_history
-from services.chats import get_workflow_for_session, get_all_workflow_for_session
-
+from services.chats import get_response_for_session, get_history, get_all_workflow_for_session, get_workflow_for_session
 
 def list_chats():
     sessions = g.ctx.history_repo.get_all_sessions()
@@ -36,6 +35,7 @@ def get_all_workflow(session_id):
 
 
 def push_new_message(session_id):
+    logging.debug("push_new_message start")
     user_input = request.json.get("input", "")
     if len(user_input) == 0:
         return Response("Invalid user input", status=400)

@@ -248,6 +248,7 @@ class ChatChain():
             }
             | prompt
             | llm)
+        logging.debug("ChatChain building is finished")
 
     def react(self, user_message):
         prompt = self.get_react_prompt()
@@ -287,8 +288,9 @@ class ChatChain():
 
 
 def get_response_for_session(ctx, session_id, user_message):
+    logging.debug("get_response_for_session started")
     retriever = ctx.repo.retriever
-    llm = ctx.ollama.llm
+    llm = ctx.llm_runner.llm
     # @TODO check if this clone the thing to a new object.
     history_repo = ctx.history_repo
     history_repo.set_session(f"{session_id}")
@@ -296,10 +298,13 @@ def get_response_for_session(ctx, session_id, user_message):
     chain = ChatChain(llm, retriever, history_repo, session_id)
     ai_response = []
     result = chain.stream({"input": user_message})
+    logging.debug("Result received")
     for x in result:
+        logging.debug("Passing through result")
         ai_response.append(x.content)
         yield str(x.content)
 
+    logging.debug("Validating json")
     yield "\nChecking if json is correct and validation\n\n"
     full_ai_response = "".join(ai_response)
     validator = ValidatingJsonWorkflow(chain, session_id, full_ai_response, ctx.validator)

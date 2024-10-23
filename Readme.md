@@ -86,13 +86,22 @@ python main.py run
 This will create a web server on port 5000, and user can use the browser to
 iterate over it.
 
+## run with Replicate
+Without a GPU installed locally, it might be needed to run the models in a cloud, like the [Replicate](https://replicate.com/).
+
+```
+export export REPLICATE_API_TOKEN=r8_2.........
+LLM_RUNNER=replicate LOG_LEVEL=DEBUG LLM_MODEL="granite-code:8b" python main.py run
+```
+
 # Environment Variables
 
 | Environment Variable    | Default Value                                                | Description                                   |
 |-------------------------|--------------------------------------------------------------|-----------------------------------------------|
-| `OLLAMA_MODEL`          | `granite-code:8b`                                            | Specifies the model used by Ollama.           |
+| `LLM_MODEL`          | `granite-code:8b`                                            | Specifies the model used by Ollama.           |
+| `LLM_URL`            | `http://localhost:11434`                                     | Base URL for Ollama API.                      |
+| `LLM_RUNNER`             | `ollama`                                                       | Runner (Provider) for running the models. Either "ollama" or "replicate" |
 | `LOG_LEVEL`             | `INFO`                                                       | LOG LEVEL information.                        |
-| `OLLAMA_URL`            | `http://localhost:11434`                                     | Base URL for Ollama API.                      |
 | `FAISS_DB`              | `/tmp/db_faiss`                                              | Path or reference to the local FAISS database.|
 | `WORKFLOW_SCHEMA_URL`   | `https://raw.githubusercontent.com/serverlessworkflow/specification/main/schema/workflow.yaml` | URL for the serverless workflow JSON schema. |
 | `SQLITE`                | `chats.db`                                                   | path to store previous chats                  |
