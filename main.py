@@ -133,10 +133,24 @@ def validate_json(obj, file_path):
     click.echo(f"The workflow can compile, result: {valid}")
 
 
+@click.command()
+@click.argument('text', required=True)
+@click.pass_obj
+def embedding(obj, text):
+    click.echo(f"Checking text: '{text}'")
+    data = obj.repo.retriever.invoke(text)
+    click.echo("Number of items: {0}".format(len(data)))
+    for i,item in enumerate(data):
+        #click.echo(click.style(f"I am colored {color}", fg=color))
+        click.echo(click.style(f"Document {i}: {item.metadata.get('source')}", fg="green"))
+        click.echo(click.style(item.page_content, fg="bright_yellow"))
+        click.echo("\n\n")
+
 cli.add_command(load_data)
 cli.add_command(run)
 cli.add_command(sample_request)
 cli.add_command(validate_json)
+cli.add_command(embedding)
 
 
 if __name__ == '__main__':
