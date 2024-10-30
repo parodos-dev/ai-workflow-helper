@@ -50,10 +50,12 @@ class VectorRepository:
         self._vector_store.save_local(folder_path=self.path)
 
     def add_documents(self, docs: [str]):
-        return self._vector_store.add_documents(docs)
+        return self.vectordb.add_documents(docs)
 
     @property
     def vectordb(self):
+        if not self.initialized:
+            self._initialize()
         return self._vector_store
 
     @property
